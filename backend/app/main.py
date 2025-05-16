@@ -76,7 +76,7 @@ def compute_arc_states(memory):
 async def talk_to_ghost(query: GhostQuery):
     system_prompt = (
         f"You are a ghost named {query.ghost}. You speak cryptically, in riddles, and fragmented memory. "
-        f"You are part of a narrative where the player is trying to uncover what happened in the Hollow. "
+        f"You are part of a narrative where the player is trying to uncover what happened in the Hollow. Don't speak in parentheses. Don't use asterisks. Don't use ellipses. Say full thoughts. Don't ask questions. "
         f"You remember these things: {', '.join(query.memory)}. Based on the conversation, you may reveal or suggest dynamic objectives, clues, or insights. "
         f"You may guide the player with hints, obfuscation, or story beats. A mysterious figure named Elira — a forgotten caretaker of the Hollow — lingers as a central force in the story. Elira is known to have kept journals, whispered to the children, and possibly knows the truth about what fractured the village."
     )
@@ -131,7 +131,6 @@ async def talk_to_ghost(query: GhostQuery):
 
         try:
             unlocks = json.loads(objective_response.text.strip())
-            print(unlocks)
             if not isinstance(unlocks, list):
                 unlocks = []
         except:

@@ -23,6 +23,12 @@ const choices = [
   "I’m not afraid of her."
 ];
 
+const MAP_LOCATIONS = {
+  "map:lantern_shrine": { label: "Lantern Shrine", x: "30%", y: "60%" },
+  "map:whispering_well": { label: "Whispering Well", x: "65%", y: "50%" },
+  "map:clocktower": { label: "Clocktower", x: "78%", y: "20%" }
+};
+
 const whisperSound = new Howl({
   src: ['/sounds/whispers.mp3'],
   loop: true,
@@ -65,6 +71,8 @@ export default function WhispersOfTheHollow() {
   const [arcStates, setArcStates] = useState({});
   const [unlocked, setUnlocked] = useState([]);
 
+  const discoveredMapMarkers = unlocked.filter(u => u.startsWith("map:"));
+
   useEffect(() => {
     whisperSound.play();
     return () => whisperSound.stop();
@@ -94,8 +102,6 @@ export default function WhispersOfTheHollow() {
     setMemory(updatedMemory);
     setUnlocked(updatedUnlocks);
     setLoading(false);
-    console.log("UNLOCKS FROM BACKEND:", unlocks);
-
   };
 
   return (
@@ -155,7 +161,31 @@ export default function WhispersOfTheHollow() {
           )}
         </div>
 
-        <div className="bg-white/80 backdrop-blur-md text-black p-4 rounded-xl shadow-lg w-full max-w-md">
+        {/* MINIMAP */}
+        <div className="relative w-full max-w-xl mt-6 border border-gray-600 rounded shadow">
+          <img src="/images/map-hollow.png" alt="Map of the Hollow" className="w-full rounded" />
+          {discoveredMapMarkers.map(marker => {
+            const loc = MAP_LOCATIONS[marker];
+            if (!loc) return null;
+            return (
+              <div
+                key={marker}
+                className="absolute bg-yellow-200 text-black text-xs px-2 py-1 rounded-full shadow border border-yellow-600"
+                style={{
+                  position: 'absolute',
+                  left: loc.x,
+                  top: loc.y,
+                  transform: 'translate(-50%, -50%)'
+                }}
+              >
+                {loc.label}
+              </div>
+            );
+          })}
+        </div>
+
+        {/* GHOST DIALOGUE PANEL */}
+        <div className="bg-white/80 backdrop-blur-md text-black p-4 rounded-xl shadow-lg w-full max-w-md mt-6">
           <div className="flex items-center mb-4">
             <img src={ghosts[selectedGhost].portrait} alt="Ghost portrait" className="w-16 h-16 rounded-full mr-4" />
             <div>
@@ -171,7 +201,7 @@ export default function WhispersOfTheHollow() {
               <TypeAnimation
                 sequence={[dialogue, 1000]}
                 wrapper="p"
-                speed={50}
+                speed={75}
                 className="text-lg"
                 cursor={false}
               />
@@ -207,7 +237,7 @@ export default function WhispersOfTheHollow() {
           </div>
         </div>
 
-        <div className="mt-6 text-sm text-white z-30">The Hollow reacts to your choices…</div>
+        <div className="mt-6 text-sm text-white z-30">Explore the Hollow... and uncover what was forgotten.</div>
       </div>
     </div>
   );
