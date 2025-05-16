@@ -5,7 +5,7 @@ import { Howl } from 'howler';
 const ghosts = {
   "Lantern Girl": {
     portrait: "/images/lantern-girl.png",
-    intro: "You shouldn’t be here… She’s watching from the Well…",
+    intro: "You shouldn’t be here… She’s watching from the Hollow…",
     mood: "curious"
   }
 };
@@ -39,12 +39,16 @@ const getGhostReply = async (ghost, userInput, memory = []) => {
     const data = await res.json();
     return {
       reply: data.reply || "(The ghost whispers nothing...)",
-      mood: data.mood || "curious"
+      mood: data.mood || "curious",
+      unlocks: data.unlocks || [],
+      arc_states: data.arc_states || {}
     };
   } catch (e) {
     return {
       reply: "(The connection to the spirit world has failed.)",
-      mood: "sad"
+      mood: "sad",
+      unlocks: [],
+      arc_states: {}
     };
   }
 };
@@ -54,14 +58,12 @@ export default function WhispersOfTheHollow() {
   const [dialogue, setDialogue] = useState(ghosts[selectedGhost].intro);
   const [customInput, setCustomInput] = useState("");
   const [loading, setLoading] = useState(false);
-  const [memory, setMemory] = useState([
-    "The player once lit the lantern",
-    "You warned them about the Wellmother"
-  ]);
-
+  const [memory, setMemory] = useState([]);
   const [mood, setMood] = useState(ghosts[selectedGhost].mood);
   const [prevMood, setPrevMood] = useState(mood);
   const [fadeIn, setFadeIn] = useState(false);
+  const [arcStates, setArcStates] = useState({});
+  const [unlocked, setUnlocked] = useState([]);
 
   useEffect(() => {
     whisperSound.play();
@@ -82,11 +84,18 @@ export default function WhispersOfTheHollow() {
   const handleUserInput = async (text) => {
     setLoading(true);
     setDialogue("...");
-    const { reply, mood: updatedMood } = await getGhostReply(selectedGhost, text, memory);
+    const { reply, mood: newMood, unlocks, arc_states } = await getGhostReply(selectedGhost, text, memory);
     setDialogue(reply);
-    setMemory([...memory, text]);
-    setMood(updatedMood);
+    setMood(newMood);
+    setArcStates(arc_states);
+
+    const updatedMemory = Array.from(new Set([...memory, text, ...unlocks]));
+    const updatedUnlocks = Array.from(new Set([...unlocked, ...unlocks]));
+    setMemory(updatedMemory);
+    setUnlocked(updatedUnlocks);
     setLoading(false);
+    console.log("UNLOCKS FROM BACKEND:", unlocks);
+
   };
 
   return (
@@ -101,36 +110,50 @@ export default function WhispersOfTheHollow() {
             0% { transform: translateX(0px) translateY(0px); }
             100% { transform: translateX(-30px) translateY(-20px); }
           }
-          @keyframes flicker {
-            0%, 18%, 22%, 25%, 53%, 57%, 100% { opacity: 1; }
-            20%, 24%, 55% { opacity: 0.3; }
-          }
         `}
       </style>
 
-      {/* Base background (previous mood) */}
-      <div className={`
-        absolute inset-0 z-0
-        bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] 
-        ${ghostAura[prevMood]}
-      `} />
-
-      {/* Fade-in background (new mood) */}
+      {/* Background aura layers */}
+      <div className={`absolute inset-0 z-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] ${ghostAura[prevMood]}`} />
       {fadeIn && (
-        <div className={`
-          absolute inset-0 z-10
-          bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] 
-          ${ghostAura[mood]}
-          animate-fadeAura
-        `} />
+        <div className={`absolute inset-0 z-10 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] ${ghostAura[mood]} animate-fadeAura`} />
       )}
-
-      {/* Fog overlay */}
       <div className="absolute inset-0 pointer-events-none bg-black/40 backdrop-blur-sm z-20 animate-[fogMove_30s_linear_infinite_alternate]" />
 
-      {/* UI */}
       <div className="relative z-30 flex flex-col items-center p-4">
-        <h1 className="text-3xl font-bold mb-6 text-white">Whispers of the Hollow</h1>
+        <h1 className="text-3xl font-bold mb-4 text-white">Whispers of the Hollow</h1>
+
+        {/* ARC STATE PANEL */}
+        <div className="bg-white/70 backdrop-blur-md p-4 rounded-md mb-4 w-full max-w-xl shadow text-sm text-gray-800">
+          <h2 className="text-lg font-semibold mb-2">Story Arcs</h2>
+          <ul className="grid grid-cols-2 gap-2">
+            {Object.entries(arcStates).map(([arc, state]) => (
+              <li key={arc} className={`px-3 py-2 rounded bg-gray-100 border-l-4
+                ${state === "locked" ? "border-gray-400" :
+                  state === "discovered" ? "border-yellow-400" :
+                  state === "active" ? "border-blue-500" :
+                  "border-green-500"}
+              `}>
+                <span className="capitalize font-medium">{arc.replace(/_/g, ' ')}</span>
+                <span className="float-right capitalize">{state}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        {/* UNLOCKED OBJECTIVES PANEL */}
+        <div className="bg-white/70 backdrop-blur-md p-4 rounded-md mb-6 w-full max-w-xl shadow text-sm text-gray-800">
+          <h2 className="text-lg font-semibold mb-2">Discovered Clues</h2>
+          {unlocked.length > 0 ? (
+            <ul className="list-disc ml-4 space-y-1">
+              {unlocked.map((item, idx) => (
+                <li key={idx} className="text-gray-800">{item}</li>
+              ))}
+            </ul>
+          ) : (
+            <p className="italic text-gray-500">No clues yet...</p>
+          )}
+        </div>
 
         <div className="bg-white/80 backdrop-blur-md text-black p-4 rounded-xl shadow-lg w-full max-w-md">
           <div className="flex items-center mb-4">
@@ -184,7 +207,7 @@ export default function WhispersOfTheHollow() {
           </div>
         </div>
 
-        <div className="mt-6 text-sm text-white z-30">Ghosts change based on what you say…</div>
+        <div className="mt-6 text-sm text-white z-30">The Hollow reacts to your choices…</div>
       </div>
     </div>
   );
