@@ -10,8 +10,14 @@ __pycache__/
 
 # Virtual environment
 venv/
+whispers-backend/
 .env/
 .venv/
+.whispers-backend/
+
+# Environment variables
+.env
+.env.*
 
 # OS
 .DS_Store
