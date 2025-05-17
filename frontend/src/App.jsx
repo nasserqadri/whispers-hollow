@@ -30,41 +30,25 @@ const initialMapLocations = {
 };
 
 const whisperSound = new Howl({
-  src: ['/sounds/whispers.mp3'],
+  src: ['/sounds/dungeon_ambient.mp3'],
   loop: true,
   volume: 0.4
 });
 
 const getGhostReply = async (ghost, userInput, memory = [], sessionId, dialogueHistory) => {
-  try {
-    const res = await fetch('http://localhost:8000/talk', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        ghost,
-        user_input: userInput,
-        memory,
-        session_id: sessionId,
-        dialogue_history: dialogueHistory
-      })
-    });
-    const data = await res.json();
-    return {
-      reply: data.reply || "(The ghost whispers nothing...)",
-      mood: data.mood || "curious",
-      unlocks: data.unlocks || [],
-      arc_states: data.arc_states || {},
-      story_arcs: data.story_arcs || {}
-    };
-  } catch (e) {
-    return {
-      reply: "(The connection to the spirit world has failed.)",
-      mood: "sad",
-      unlocks: [],
-      arc_states: {},
-      story_arcs: {}
-    };
-  }
+  const res = await fetch('http://localhost:8000/talk', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ ghost, user_input: userInput, memory, session_id: sessionId, dialogue_history: dialogueHistory })
+  });
+  const data = await res.json();
+  return {
+    reply: data.reply || "(The ghost whispers nothing...)",
+    mood: data.mood || "curious",
+    unlocks: data.unlocks || [],
+    arc_states: data.arc_states || {},
+    story_arcs: data.story_arcs || {}
+  };
 };
 
 export default function WhispersOfTheHollow() {
@@ -77,6 +61,7 @@ export default function WhispersOfTheHollow() {
   const [prevMood, setPrevMood] = useState(mood);
   const [fadeIn, setFadeIn] = useState(false);
   const [arcStates, setArcStates] = useState({});
+  const [storyArcs, setStoryArcs] = useState({});
   const [unlocked, setUnlocked] = useState([]);
   const [dialogueHistory, setDialogueHistory] = useState([]);
   const [sessionId] = useState(() => crypto.randomUUID());
@@ -113,12 +98,12 @@ export default function WhispersOfTheHollow() {
     setDialogue(reply);
     setMood(newMood);
     setArcStates(arc_states);
+    setStoryArcs(story_arcs);
 
     const updatedMemory = Array.from(new Set([...memory, text, ...unlocks]));
     const updatedUnlocks = Array.from(new Set([...unlocked, ...unlocks]));
     const updatedHistory = [...dialogueHistory, `User: ${text}`, `Ghost: ${reply}`];
 
-    // collect all map locations across arcs
     const knownMapLocations = new Set([
       ...unlocks.filter(u => u.startsWith("map:")),
       ...Object.values(story_arcs || {}).flatMap(arc =>
@@ -131,12 +116,9 @@ export default function WhispersOfTheHollow() {
       if (!updatedMap[loc]) {
         updatedMap[loc] = {
           label: loc.replace(/^map:/, '').replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
-          x: "50%",
-          y: "50%",
-          opacity: 1.0
+          x: "50%", y: "50%", opacity: 1.0
         };
       }
-
       if (unlocks.includes(loc)) {
         updatedMap[loc].opacity = 1.0;
       }
@@ -150,95 +132,31 @@ export default function WhispersOfTheHollow() {
   };
 
   return (
-    <div className="relative min-h-screen overflow-hidden font-sans">
-      <style>
-        {`
-          @keyframes fadeAura {
-            from { opacity: 0; }
-            to { opacity: 1; }
-          }
-          @keyframes fogMove {
-            0% { transform: translateX(0px) translateY(0px); }
-            100% { transform: translateX(-30px) translateY(-20px); }
-          }
-        `}
-      </style>
-
-      {/* Background aura layers */}
+    <div className="relative min-h-screen flex flex-row overflow-hidden font-sans bg-black text-white">
+      {/* Background Aura */}
       <div className={`absolute inset-0 z-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] ${ghostAura[prevMood]}`} />
-      {fadeIn && (
-        <div className={`absolute inset-0 z-10 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] ${ghostAura[mood]} animate-fadeAura`} />
-      )}
-      <div className="absolute inset-0 pointer-events-none bg-black/40 backdrop-blur-sm z-20 animate-[fogMove_30s_linear_infinite_alternate]" />
+      {fadeIn && <div className={`absolute inset-0 z-10 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] ${ghostAura[mood]} animate-fadeAura`} />}
+      <div className="absolute inset-0 pointer-events-none bg-black/40 backdrop-blur-sm z-20" />
 
-      <div className="relative z-30 flex flex-col items-center p-4">
-        <h1 className="text-3xl font-bold mb-4 text-white">Whispers of the Hollow</h1>
+      {/* Left Column */}
+      <div className="relative z-30 w-1/2 flex flex-col p-4 space-y-4 overflow-y-auto max-h-screen">
+        <h1 className="text-3xl font-bold mb-2">Whispers of the Hollow</h1>
 
-        {/* ARC STATE PANEL */}
-        <div className="bg-white/70 backdrop-blur-md p-4 rounded-md mb-4 w-full max-w-xl shadow text-sm text-gray-800">
-          <h2 className="text-lg font-semibold mb-2">Story Arcs</h2>
-          <ul className="grid grid-cols-2 gap-2">
-            {Object.entries(arcStates).map(([arc, state]) => (
-              <li key={arc} className={`px-3 py-2 rounded bg-gray-100 border-l-4
-                ${state === "locked" ? "border-gray-400" :
-                  state === "discovered" ? "border-yellow-400" :
-                  state === "active" ? "border-blue-500" :
-                  "border-green-500"}
-              `}>
-                <span className="capitalize font-medium">{arc.replace(/_/g, ' ')}</span>
-                <span className="float-right capitalize">{state}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
-
-        {/* UNLOCKS PANEL */}
-        <div className="bg-white/70 backdrop-blur-md p-4 rounded-md mb-4 w-full max-w-xl shadow text-sm text-gray-800">
-          <h2 className="text-lg font-semibold mb-2">Discovered Clues</h2>
-          {unlocked.length === 0 ? (
-            <p className="italic text-gray-600">No clues yet...</p>
-          ) : (
-            <ul className="list-disc list-inside space-y-1">
-              {unlocked.map((item, idx) => (
-                <li key={idx} className="capitalize">{item.replace(/[:_]/g, ' ')}</li>
-              ))}
-            </ul>
-          )}
-        </div>
-
-        {/* MINIMAP */}
-        <div className="relative w-full max-w-xl mt-6 border border-gray-600 rounded shadow">
-          <img src="/images/map-hollow.png" alt="Map of the Hollow" className="w-full rounded" />
-          {Object.entries(mapLocations).map(([key, loc]) => {
-            const isUnlocked = discoveredMapMarkers.includes(key);
-            return (
-              <div
-                key={key}
-                className="absolute text-black text-xs px-2 py-1 rounded-full shadow border border-yellow-600 bg-yellow-200 transition-opacity duration-700"
-                style={{
-                  left: loc.x,
-                  top: loc.y,
-                  transform: 'translate(-50%, -50%)',
-                  opacity: isUnlocked ? 1.0 : loc.opacity ?? 0.2
-                }}
-              >
-                {loc.label} {isUnlocked && "✅"}
-              </div>
-            );
-          })}
-        </div>
-
-        {/* GHOST DIALOGUE PANEL */}
-        <div className="bg-white/80 backdrop-blur-md text-black p-4 rounded-xl shadow-lg w-full max-w-md mt-6">
-          <div className="flex items-center mb-4">
-            <img src={ghosts[selectedGhost].portrait} alt="Ghost portrait" className="w-16 h-16 rounded-full mr-4" />
-            <div>
-              <h2 className="text-xl font-semibold">{selectedGhost}</h2>
-              <p className="text-sm text-gray-600">Mood: {mood}</p>
-            </div>
+        {/* Ghost + Mood */}
+        <div className="flex items-center space-x-4 bg-white/20 p-3 rounded shadow">
+          <img src={ghosts[selectedGhost].portrait} className="w-16 h-16 rounded-full" alt="Ghost" />
+          <div>
+            <h2 className="text-xl font-semibold">{selectedGhost}</h2>
+            <p className="text-sm text-gray-200">Mood: {mood}</p>
           </div>
+        </div>
 
-          <div className="mb-4 min-h-[80px]">
+        {/* Chat Window */}
+        <div className="bg-gray-900/90 border border-gray-700 rounded shadow">
+          <div className="bg-gray-800 px-4 py-2 border-b border-gray-700 text-sm font-semibold tracking-wider uppercase text-gray-300">
+            Spirit Channel
+          </div>
+          <div className="p-4 min-h-[100px] text-white font-serif tracking-wide leading-relaxed">
             {loading ? (
               <p className="text-lg italic animate-pulse">The ghost is thinking...</p>
             ) : (
@@ -252,47 +170,106 @@ export default function WhispersOfTheHollow() {
               />
             )}
           </div>
-
-          <div className="space-y-2 mb-4">
-            {choices.map((choice, idx) => (
+          <div className="px-4 pb-4">
+            <div className="space-y-2">
+              {choices.map((choice, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => handleUserInput(choice)}
+                  className="w-full px-4 py-2 bg-gray-200 hover:bg-gray-300 text-black rounded"
+                >
+                  {choice}
+                </button>
+              ))}
+            </div>
+            <div className="flex mt-2">
+              <input
+                value={customInput}
+                onChange={(e) => setCustomInput(e.target.value)}
+                placeholder="Speak your mind..."
+                className="flex-grow bg-gray-800 text-white p-2 rounded-l-md placeholder-gray-400"
+              />
               <button
-                key={idx}
-                onClick={() => handleUserInput(choice)}
-                className="w-full text-left px-4 py-2 bg-gray-300 hover:bg-gray-400 rounded-md"
+                onClick={() => handleUserInput(customInput)}
+                className="bg-rose-500 px-4 py-2 text-white rounded-r-md hover:bg-rose-400"
               >
-                {choice}
+                Send
               </button>
-            ))}
-          </div>
-
-          <div className="flex mt-4">
-            <input
-              type="text"
-              value={customInput}
-              onChange={(e) => setCustomInput(e.target.value)}
-              placeholder="Speak your mind..."
-              className="flex-grow bg-gray-100 text-black p-2 rounded-l-md focus:outline-none"
-            />
-            <button
-              onClick={() => handleUserInput(customInput)}
-              className="bg-rose-500 px-4 py-2 rounded-r-md hover:bg-rose-400 text-white"
-            >
-              Send
-            </button>
+            </div>
           </div>
         </div>
 
-        {/* DIALOGUE LOG */}
-        <div className="mt-6 w-full max-w-xl bg-white/70 text-sm text-gray-800 p-4 rounded-md backdrop-blur-md overflow-y-auto max-h-60 shadow">
-          <h2 className="text-lg font-semibold mb-2">Dialogue Log</h2>
+        {/* Story Arc Journal (Moved here) */}
+        <div className="bg-white/10 p-4 rounded shadow">
+          <h2 className="text-lg font-semibold mb-2 text-white">Story Arc Journal</h2>
+          {Object.entries(storyArcs).length === 0 ? (
+            <p className="italic text-gray-400">No arcs yet...</p>
+          ) : (
+            Object.entries(storyArcs).map(([arc, details]) => (
+              <div key={arc} className={`mb-2 p-2 rounded border-l-4
+                ${arcStates[arc] === 'complete' ? 'border-green-500 bg-green-900/30' :
+                  arcStates[arc] === 'active' ? 'border-blue-400 bg-blue-900/30' :
+                  arcStates[arc] === 'discovered' ? 'border-yellow-500 bg-yellow-900/30' :
+                  'border-gray-600 bg-gray-800/40'}`}>
+                <p className="capitalize font-bold text-white">{arc.replace(/_/g, ' ')}</p>
+                <p className="text-gray-300">Status: <span className="capitalize">{arcStates[arc]}</span></p>
+                <p className="text-gray-400">Required: {details.required?.join(", ")}</p>
+                {details.optional?.length > 0 && <p className="text-gray-500">Optional: {details.optional?.join(", ")}</p>}
+              </div>
+            ))
+          )}
+        </div>
+      </div>
+
+      {/* Right Column */}
+      <div className="relative z-30 w-1/2 flex flex-col p-4 space-y-4 overflow-y-auto max-h-screen">
+
+        {/* Minimap at top */}
+        <div className="relative border border-gray-600 rounded shadow">
+          <img src="/images/map-hollow.png" alt="Map of the Hollow" className="w-full rounded" />
+          {Object.entries(mapLocations).map(([key, loc]) => {
+            const isUnlocked = discoveredMapMarkers.includes(key);
+            return (
+              <div
+                key={key}
+                className="absolute text-black text-base font-bold px-2 py-1 rounded-full shadow border border-yellow-600 bg-yellow-200 transition-opacity duration-700"
+                style={{
+                  left: loc.x,
+                  top: loc.y,
+                  transform: 'translate(-50%, -50%)',
+                  fontSize: '1.25rem',
+                  opacity: isUnlocked ? 1.0 : loc.opacity ?? 0.2
+                }}
+              >
+                {loc.label} {isUnlocked && "✅"}
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Unlocks Panel */}
+        <div className="bg-white/10 p-4 rounded shadow">
+          <h2 className="text-lg font-semibold mb-2 text-white">Discovered Clues</h2>
+          {unlocked.length === 0 ? (
+            <p className="italic text-gray-400">No clues yet...</p>
+          ) : (
+            <ul className="list-disc list-inside space-y-1">
+              {unlocked.map((item, idx) => (
+                <li key={idx} className="capitalize text-white">{item.replace(/[:_]/g, ' ')}</li>
+              ))}
+            </ul>
+          )}
+        </div>
+
+        {/* Dialogue Log */}
+        <div className="bg-gray-900/80 text-gray-100 p-4 rounded shadow max-h-60 overflow-y-auto">
+          <h2 className="text-lg font-semibold mb-2 text-white">Dialogue Log</h2>
           <ul className="space-y-1">
             {dialogueHistory.map((line, idx) => (
               <li key={idx}>{line}</li>
             ))}
           </ul>
         </div>
-
-        <div className="mt-6 text-sm text-white z-30">Explore the Hollow... and uncover what was forgotten.</div>
       </div>
     </div>
   );
