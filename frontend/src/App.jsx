@@ -291,227 +291,241 @@ export default function WhispersOfTheHollow() {
 
   return (
     <div className="relative min-h-screen font-sans bg-black text-white overflow-hidden">
-    {/* Background layers */}
-    <div className={`absolute inset-0 z-0 transition-opacity duration-1000 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] ${ghostAura[prevMood]}`} />
-    {mood !== prevMood && (
-      <div className={`absolute inset-0 z-10 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] ${ghostAura[mood]} opacity-0 animate-fadeIn`} />
-    )}
-    <div className="absolute inset-0 pointer-events-none bg-black/40 backdrop-blur-sm z-20" />
+      {/* Background layers */}
+      <div className={`absolute inset-0 z-0 transition-opacity duration-1000 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] ${ghostAura[prevMood]}`} />
+      {mood !== prevMood && (
+        <div className={`absolute inset-0 z-10 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] ${ghostAura[mood]} opacity-0 animate-fadeIn`} />
+      )}
+      <div className="absolute inset-0 pointer-events-none bg-black/40 backdrop-blur-sm z-20" />
 
-    {/* Top Title Bar */}
-    <div className="relative z-30 w-full p-6 pb-2">
-      <h1 className="text-4xl font-bold text-center text-white">Whispers of the Hollow</h1>
-    </div>
+      {/* Top Title Bar */}
+      <div className="relative z-30 w-full p-6 pb-2">
+        <h1 className="text-4xl font-bold text-center text-white">Whispers of the Hollow</h1>
+      </div>
 
-    {/* Main Content */}
-    <div className="relative z-30 flex flex-row w-full px-4 space-x-4 max-h-[calc(100vh-80px)] overflow-y-auto">
-      {/* Left Panel */}
+      {/* Main Content */}
+      <div className="relative z-30 flex flex-row w-full px-4 space-x-4 max-h-[calc(100vh-80px)] overflow-y-auto">
+        {/* Left Panel */}
 
-      <div className="relative z-30 w-1/2 flex flex-col p-4 space-y-4 overflow-y-auto max-h-screen">
+        <div className="relative z-30 w-1/2 flex flex-col p-4 space-y-4 overflow-y-auto max-h-screen">
 
-        {/* Ghost Mood + Name */}
-        <div className="flex items-center space-x-4 bg-white/20 p-3 rounded shadow">
-          <div className={`w-28 h-28 rounded-full ${ghostMoodGlow[mood]} transition-all duration-500`}>
-            <img src={ghosts[selectedGhost].portrait} className="rounded-full w-full h-full" alt="Ghost" />
-          </div>
-
-          <div className="flex items-start space-x-2">
-            <img src="/images/ai_wand.png" alt="AI" className="w-11 h-11 animate-pulseWand" />
-            <div>
-              <h2 className="text-xl font-semibold">{selectedGhost}</h2>
-              <p className="text-xl text-gray-200">Mood: {capitalize(mood)}</p>
+          {/* Ghost Panel */}
+          <div className="bg-white/20 rounded shadow border border-gray-600 overflow-hidden">
+            <div className="bg-gray-800 px-4 py-2 border-b border-gray-700 text-sm font-semibold tracking-wider uppercase text-gray-300">
+              You are currently speaking to...
             </div>
-          </div>
-        </div>
-
-        {/* Dialogue & Input */}
-        <div className="bg-gray-900/90 border border-gray-700 rounded shadow">
-          <div className="bg-gray-800 px-4 py-2 border-b border-gray-700 text-sm font-semibold tracking-wider uppercase text-gray-300">
-            Spirit Channel
-          </div>
-          <div className="p-4 min-h-[100px] text-white font-serif tracking-wide leading-relaxed">
-            {currentObjective() && (
-              <div className="mb-2 text-sm text-rose-200 italic bg-rose-900/30 px-3 py-1 rounded">
-                {currentObjective()}
+            <div className="flex items-center space-x-4 p-4">
+              <div className={`w-28 h-28 rounded-full ${ghostMoodGlow[mood]} transition-all duration-500`}>
+                <img src={ghosts[selectedGhost].portrait} className="rounded-full w-full h-full" alt="Ghost" />
               </div>
-            )}
-            {loading ? (
-              <p className="text-lg italic animate-pulse">The ghost is thinking...</p>
-            ) : (
-              <p className="text-lg flex items-start gap-2">
-                <img
-                  src="/images/ai_wand.png"
-                  alt="AI"
-                  className="inline-block w-11 h-11 mt-[3px] animate-pulseWand"
-                />
-                <TypeAnimation
-                  key={dialogue}
-                  sequence={[dialogue, 1000]}
-                  wrapper="span"
-                  speed={75}
-                  cursor={false}
-                />
-              </p>
-            )}
-          </div>
-          <div className="px-4 pb-4">
-            <div className="space-y-2">
-              {(followups.length > 0 ? followups : choices).map((choice, idx) => (
-                <button
-                  key={idx}
-                  onClick={() => handleUserInput(choice)}
-                  className="w-full px-4 py-2 bg-gray-200 hover:bg-gray-300 text-black rounded flex items-center space-x-2"
-                >
-                  {followups.length > 0 && (
-                    <img
-                      src="/images/ai_wand.png"
-                      alt="AI"
-                      className="w-10 h-10 inline-block animate-pulseWand"
-                    />
-                  )}
-                  <span>{choice}</span>
-                </button>
-              ))}
-            </div>
-            <div className="flex mt-2">
-              <input
-                value={customInput}
-                onChange={(e) => setCustomInput(e.target.value)}
-                placeholder="Speak your mind..."
-                className="flex-grow bg-gray-800 text-white p-2 rounded-l-md placeholder-gray-400"
-              />
-              <button
-                onClick={() => handleUserInput(customInput)}
-                className="bg-rose-500 px-4 py-2 text-white rounded-r-md hover:bg-rose-400"
-              >
-                Send
-              </button>
+              <div className="flex items-start space-x-2">
+                <img src="/images/ai_wand.png" alt="AI" className="w-11 h-11 animate-pulseWand" />
+                <div>
+                  <h2 className="text-xl font-semibold">{selectedGhost}</h2>
+                  <p className="text-xl text-gray-200">Mood: {capitalize(mood)}</p>
+                </div>
+              </div>
             </div>
           </div>
-        </div>
 
-        {/* Toggle Admin Panel */}
-        <button
-          className="mt-4 px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded text-white text-sm tracking-wide"
-          onClick={() => setShowAdmin(!showAdmin)}
-        >
-          {showAdmin ? "Hide Admin Panel" : "Show Admin Panel"}
-        </button>
-
-        {/* Admin Panel */}
-        {showAdmin && (
-          <div className="bg-gray-800/90 p-4 rounded shadow border border-gray-700">
-            <h2 className="text-lg font-bold mb-3 text-rose-200 uppercase tracking-wider">Admin Panel</h2>
-
-            {/* Story Arc Journal */}
-            <div className="mb-6">
-              <h3 className="text-md font-semibold mb-2 text-white">Story Arc Journal</h3>
-              {Object.entries(storyArcs).length === 0 ? (
-                <p className="italic text-gray-400">No arcs yet...</p>
+          {/* Dialogue & Input */}
+          <div className="bg-gray-900/90 border border-gray-700 rounded shadow">
+            <div className="bg-gray-800 px-4 py-2 border-b border-gray-700 text-sm font-semibold tracking-wider uppercase text-gray-300">
+              Your Conversation
+            </div>
+            <div className="p-4 min-h-[100px] text-white font-serif tracking-wide leading-relaxed">
+              {currentObjective() && (
+                <div className="mb-2 text-sm text-rose-200 italic bg-rose-900/30 px-3 py-1 rounded">
+                  {currentObjective()}
+                </div>
+              )}
+              {loading ? (
+                <p className="text-lg italic animate-pulse">The ghost is thinking...</p>
               ) : (
-                [...Object.entries(storyArcs)]
-                  .sort(([aKey], [bKey]) => {
-                    const aStatic = staticArcKeys.has(aKey);
-                    const bStatic = staticArcKeys.has(bKey);
-                    return aStatic === bStatic ? 0 : aStatic ? 1 : -1;
-                  })
-                  .map(([arc, details]) => (
-                    <div
-                      key={arc}
-                      className={`mb-2 p-2 rounded border-l-4
-                        ${arcStates[arc] === 'complete' ? 'border-green-500 bg-green-900/30' :
-                          arcStates[arc] === 'active' ? 'border-blue-400 bg-blue-900/30' :
-                            arcStates[arc] === 'discovered' ? 'border-yellow-500 bg-yellow-900/30' :
-                              'border-gray-600 bg-gray-800/40'}`}
-                    >
-                      <p className="capitalize font-bold text-white">
-                        {!staticArcKeys.has(arc) && (
-                          <img
-                            src="/images/ai_wand.png"
-                            alt="AI"
-                            className="inline-block w-11 h-11 mr-1 mb-[2px] opacity-90 animate-pulseWand"
-                          />
-                        )}
-                        {arc.replace(/_/g, ' ')}
-                      </p>
-                      <p className="text-gray-300">Status: <span className="capitalize">{arcStates[arc]}</span></p>
-                      <p className="text-gray-400">Required: {details.required?.join(", ")}</p>
-                      {details.optional?.length > 0 && (
-                        <p className="text-gray-500">Optional: {details.optional?.join(", ")}</p>
-                      )}
-                    </div>
-                  ))
+                <p className="text-lg flex items-start gap-2">
+                  <img
+                    src="/images/ai_wand.png"
+                    alt="AI"
+                    className="inline-block w-11 h-11 mt-[3px] animate-pulseWand"
+                  />
+                  <TypeAnimation
+                    key={dialogue}
+                    sequence={[dialogue, 1000]}
+                    wrapper="span"
+                    speed={75}
+                    cursor={false}
+                  />
+                </p>
               )}
             </div>
-
-            {/* Conversation History */}
-            <div>
-              <h3 className="text-md font-semibold mb-2 text-white">Conversation History</h3>
-              <div className="bg-gray-900/80 text-gray-100 p-3 rounded shadow max-h-40 overflow-y-auto">
-                <ul className="space-y-1 text-sm">
-                  {dialogueHistory.map((line, idx) => (
-                    <li key={idx}>{line}</li>
-                  ))}
-                </ul>
+            <div className="px-4 pb-4">
+              <div className="space-y-2">
+                {(followups.length > 0 ? followups : choices).map((choice, idx) => (
+                  <button
+                    key={idx}
+                    onClick={() => handleUserInput(choice)}
+                    className="w-full px-4 py-2 bg-gray-200 hover:bg-gray-300 text-black rounded flex items-center space-x-2"
+                  >
+                    {followups.length > 0 && (
+                      <img
+                        src="/images/ai_wand.png"
+                        alt="AI"
+                        className="w-10 h-10 inline-block animate-pulseWand"
+                      />
+                    )}
+                    <span>{choice}</span>
+                  </button>
+                ))}
+              </div>
+              <div className="flex mt-2">
+                <input
+                  value={customInput}
+                  onChange={(e) => setCustomInput(e.target.value)}
+                  placeholder="Speak your mind..."
+                  className="flex-grow bg-gray-800 text-white p-2 rounded-l-md placeholder-gray-400"
+                />
+                <button
+                  onClick={() => handleUserInput(customInput)}
+                  className="bg-rose-500 px-4 py-2 text-white rounded-r-md hover:bg-rose-400"
+                >
+                  Send
+                </button>
               </div>
             </div>
           </div>
-        )}
-      </div>
 
-      {/* Right Panel */}
-      <div className="relative z-30 w-1/2 flex flex-col p-4 space-y-4 overflow-y-auto max-h-screen">
-        {/* Map */}
-        <div className="relative border border-gray-600 rounded shadow">
-          <img src="/images/map-hollow.png" alt="Map of the Hollow" className="w-full rounded" />
-          {Object.entries(mapLocations).map(([key, loc]) => {
-            const isUnlocked = discoveredMapMarkers.includes(key);
-            const isDynamic = !staticMapKeys.has(key);
+          {/* Toggle Admin Panel */}
+          <button
+            className="mt-4 px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded text-white text-sm tracking-wide"
+            onClick={() => setShowAdmin(!showAdmin)}
+          >
+            {showAdmin ? "Hide Admin Panel" : "Show Admin Panel"}
+          </button>
 
-            return (
-              <div
-                key={key}
-                className="absolute text-black text-base font-bold px-2 py-1 rounded-full shadow border border-yellow-600 bg-yellow-200 transition-opacity duration-700 flex items-center space-x-1"
-                style={{
-                  left: loc.x,
-                  top: loc.y,
-                  transform: 'translate(-50%, -50%)',
-                  fontSize: '1.0rem',
-                  opacity: isUnlocked ? 1.0 : loc.opacity ?? 0.2
-                }}
-              >
-                <span className="flex items-center space-x-1">
-                  {isDynamic && (
-                    <img
-                      src="/images/ai_wand.png"
-                      alt="AI"
-                      title="AI-generated location"
-                      className="inline-block w-10 h-10 mb-[2px] animate-pulseWand"
-                    />
-                  )}
-                  <span>{loc.label}</span>
-                  {isUnlocked && <span>✅</span>}
-                </span>
+          {/* Admin Panel */}
+          {showAdmin && (
+            <div className="bg-gray-800/90 p-4 rounded shadow border border-gray-700">
+              <h2 className="text-lg font-bold mb-3 text-rose-200 uppercase tracking-wider">Admin Panel</h2>
+
+              {/* Story Arc Journal */}
+              <div className="mb-6">
+                <h3 className="text-md font-semibold mb-2 text-white">Story Arc Journal</h3>
+                {Object.entries(storyArcs).length === 0 ? (
+                  <p className="italic text-gray-400">No arcs yet...</p>
+                ) : (
+                  [...Object.entries(storyArcs)]
+                    .sort(([aKey], [bKey]) => {
+                      const aStatic = staticArcKeys.has(aKey);
+                      const bStatic = staticArcKeys.has(bKey);
+                      return aStatic === bStatic ? 0 : aStatic ? 1 : -1;
+                    })
+                    .map(([arc, details]) => (
+                      <div
+                        key={arc}
+                        className={`mb-2 p-2 rounded border-l-4
+                        ${arcStates[arc] === 'complete' ? 'border-green-500 bg-green-900/30' :
+                            arcStates[arc] === 'active' ? 'border-blue-400 bg-blue-900/30' :
+                              arcStates[arc] === 'discovered' ? 'border-yellow-500 bg-yellow-900/30' :
+                                'border-gray-600 bg-gray-800/40'}`}
+                      >
+                        <p className="capitalize font-bold text-white">
+                          {!staticArcKeys.has(arc) && (
+                            <img
+                              src="/images/ai_wand.png"
+                              alt="AI"
+                              className="inline-block w-11 h-11 mr-1 mb-[2px] opacity-90 animate-pulseWand"
+                            />
+                          )}
+                          {arc.replace(/_/g, ' ')}
+                        </p>
+                        <p className="text-gray-300">Status: <span className="capitalize">{arcStates[arc]}</span></p>
+                        <p className="text-gray-400">Required: {details.required?.join(", ")}</p>
+                        {details.optional?.length > 0 && (
+                          <p className="text-gray-500">Optional: {details.optional?.join(", ")}</p>
+                        )}
+                      </div>
+                    ))
+                )}
               </div>
-            );
-          })}
-        </div>
 
-        {/* Discovered Clues */}
-        <div className="bg-white/10 p-4 rounded shadow">
-          <h2 className="text-lg font-semibold mb-2 text-white">Discovered Clues</h2>
-          {unlocked.length === 0 ? (
-            <p className="italic text-gray-400">No clues yet...</p>
-          ) : (
-            <ul className="list-disc list-inside space-y-1">
-              {unlocked.map((item, idx) => (
-                <li key={idx} className="capitalize text-white">{item.replace(/[:_]/g, ' ')}</li>
-              ))}
-            </ul>
+              {/* Conversation History */}
+              <div>
+                <h3 className="text-md font-semibold mb-2 text-white">Conversation History</h3>
+                <div className="bg-gray-900/80 text-gray-100 p-3 rounded shadow max-h-40 overflow-y-auto">
+                  <ul className="space-y-1 text-sm">
+                    {dialogueHistory.map((line, idx) => (
+                      <li key={idx}>{line}</li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+            </div>
           )}
         </div>
+
+        {/* Right Panel */}
+        <div className="relative z-30 w-1/2 flex flex-col p-4 space-y-4 overflow-y-auto max-h-screen">
+          {/* Map */}
+          <div className="bg-white/10 rounded shadow border border-gray-600 overflow-hidden">
+            <div className="bg-gray-800 px-4 py-2 border-b border-gray-700 text-sm font-semibold tracking-wider uppercase text-gray-300">
+              Map of the Hollow
+            </div>
+            <div className="relative">
+              <img src="/images/map-hollow.png" alt="Map of the Hollow" className="w-full rounded-b" />
+              {Object.entries(mapLocations).map(([key, loc]) => {
+                const isUnlocked = discoveredMapMarkers.includes(key);
+                const isDynamic = !staticMapKeys.has(key);
+
+                return (
+                  <div
+                    key={key}
+                    className="absolute text-black text-base font-bold px-2 py-1 rounded-full shadow border border-yellow-600 bg-yellow-200 transition-opacity duration-700 flex items-center space-x-1"
+                    style={{
+                      left: loc.x,
+                      top: loc.y,
+                      transform: 'translate(-50%, -50%)',
+                      fontSize: '1.0rem',
+                      opacity: isUnlocked ? 1.0 : loc.opacity ?? 0.2
+                    }}
+                  >
+                    <span className="flex items-center space-x-1">
+                      {isDynamic && (
+                        <img
+                          src="/images/ai_wand.png"
+                          alt="AI"
+                          title="AI-generated location"
+                          className="inline-block w-10 h-10 mb-[2px] animate-pulseWand"
+                        />
+                      )}
+                      <span>{loc.label}</span>
+                      {isUnlocked && <span>✅</span>}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Discovered Clues */}
+          <div className="bg-white/10 rounded shadow border border-gray-600">
+            <div className="bg-gray-800 px-4 py-2 border-b border-gray-700 text-sm font-semibold tracking-wider uppercase text-gray-300">
+              Discovered Clues
+            </div>
+            <div className="p-4">
+              {unlocked.length === 0 ? (
+                <p className="italic text-gray-700">No clues yet...</p>
+              ) : (
+                <ul className="list-disc list-inside space-y-1">
+                  {unlocked.map((item, idx) => (
+                    <li key={idx} className="capitalize text-white">{item.replace(/[:_]/g, ' ')}</li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          </div>
+
+        </div>
       </div>
-    </div>
     </div>
   );
 
