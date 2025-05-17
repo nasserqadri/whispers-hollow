@@ -12,6 +12,18 @@ const ghosts = {
   }
 };
 
+const choices = [
+  "What do you mean?",
+  "Who is watching?",
+  "I’m not afraid of her."
+];
+
+const initialMapLocations = {
+  "map:lantern_shrine": { label: "Lantern Shrine", x: "23%", y: "19%", opacity: 0 },
+  "map:whispering_well": { label: "Whispering Well", x: "80%", y: "65%", opacity: 0 },
+  "map:clocktower": { label: "Clocktower", x: "80%", y: "28%", opacity: 0 }
+};
+
 const ghostAura = {
   curious: 'from-yellow-200 via-orange-300 to-red-200',
   angry: 'from-red-600 via-red-800 to-black',
@@ -26,18 +38,6 @@ const ghostMoodGlow = {
   peaceful: 'shadow-[0_0_20px_4px_rgba(52,211,153,0.5)]'
 };
 
-const choices = [
-  "What do you mean?",
-  "Who is watching?",
-  "I’m not afraid of her."
-];
-
-const initialMapLocations = {
-  "map:lantern_shrine": { label: "Lantern Shrine", x: "23%", y: "19%", opacity: 0 },
-  "map:whispering_well": { label: "Whispering Well", x: "80%", y: "65%", opacity: 0 },
-  "map:clocktower": { label: "Clocktower", x: "80%", y: "28%", opacity: 0 }
-};
-
 const whisperSound = new Howl({
   src: ['/sounds/riffusion_choir_haunting.mp3'],
   loop: true,
@@ -50,14 +50,18 @@ const getGhostReply = async (ghost, userInput, memory = [], sessionId, dialogueH
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ ghost, user_input: userInput, memory, session_id: sessionId, dialogue_history: dialogueHistory })
   });
+  return await res.json();
+};
+
+const getFollowups = async (ghost, userInput, memory, sessionId, dialogueHistory) => {
+  const res = await fetch(`${baseURL}/suggest`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ ghost, user_input: userInput, memory, session_id: sessionId, dialogue_history: dialogueHistory })
+  });
   const data = await res.json();
-  return {
-    reply: data.reply || "(The ghost whispers nothing...)",
-    mood: data.mood || "curious",
-    unlocks: data.unlocks || [],
-    arc_states: data.arc_states || {},
-    story_arcs: data.story_arcs || {}
-  };
+  console.log(data)
+  return data.questions || [];
 };
 
 
@@ -75,16 +79,16 @@ export default function WhispersOfTheHollow() {
   const [storyArcs, setStoryArcs] = useState({});
   const [unlocked, setUnlocked] = useState([]);
   const [dialogueHistory, setDialogueHistory] = useState([]);
+  const [followups, setFollowups] = useState([]);
   const [sessionId] = useState(() => crypto.randomUUID());
   const [mapLocations, setMapLocations] = useState(initialMapLocations);
 
+  const staticArcKeys = new Set(["lantern_shrine", "whispering_well", "clocktower"]);
+  const staticMapKeys = new Set(Object.keys(initialMapLocations));
   const discoveredMapMarkers = unlocked.filter(u => u.startsWith("map:"));
 
   useEffect(() => {
-    // Wake the backend if it's asleep
-    fetch(`${baseURL}/health`).catch(err => {
-      console.warn("Health check failed:", err);
-    });
+    fetch(`${baseURL}/health`).catch(err => console.warn("Health check failed:", err));
   }, []);
 
   useEffect(() => {
@@ -105,13 +109,7 @@ export default function WhispersOfTheHollow() {
 
   useEffect(() => {
     const initializeSession = async () => {
-      const { arc_states, story_arcs } = await getGhostReply(
-        selectedGhost,
-        "init",
-        memory,
-        sessionId,
-        []
-      );
+      const { arc_states, story_arcs } = await getGhostReply(selectedGhost, "init", memory, sessionId, []);
       setArcStates(arc_states);
       setStoryArcs(story_arcs);
     };
@@ -136,13 +134,17 @@ export default function WhispersOfTheHollow() {
   const handleUserInput = async (text) => {
     setLoading(true);
     setDialogue("...");
+    const updatedHistory = [...dialogueHistory, `User: ${text}`];
+
     const { reply, mood: newMood, unlocks, arc_states, story_arcs } = await getGhostReply(
       selectedGhost,
       text,
       memory,
       sessionId,
-      dialogueHistory
+      updatedHistory
     );
+
+    updatedHistory.push(`Ghost: ${reply}`);
     setDialogue(reply);
     setMood(newMood);
     setArcStates(arc_states);
@@ -150,7 +152,6 @@ export default function WhispersOfTheHollow() {
 
     const updatedMemory = Array.from(new Set([...memory, text, ...unlocks]));
     const updatedUnlocks = Array.from(new Set([...unlocked, ...unlocks]));
-    const updatedHistory = [...dialogueHistory, `User: ${text}`, `Ghost: ${reply}`];
 
     const knownMapLocations = new Set([
       ...unlocks.filter(u => u.startsWith("map:")),
@@ -167,24 +168,21 @@ export default function WhispersOfTheHollow() {
 
       if (!updatedMap[loc]) {
         const label = loc.replace(/^map:/, '').replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
-        let x = "50%", y = "50%"; // default
+        let x = "50%", y = "50%";
 
         if (isDynamic) {
           if (dynamicIndex === 0) {
             x = "50%"; y = "50%";
           } else if (dynamicIndex === 1) {
             x = "20%"; y = "85%";
-          } else if (dynamicIndex === 2) {
+          } else {
             x = "80%"; y = "80%";
           }
           dynamicIndex++;
         }
 
         updatedMap[loc] = {
-          label,
-          x,
-          y,
-          opacity: 1.0
+          label, x, y, opacity: 1.0
         };
       }
 
@@ -193,17 +191,21 @@ export default function WhispersOfTheHollow() {
       }
     });
 
+    const followupSuggestions = await getFollowups(
+      selectedGhost,
+      text,
+      updatedMemory,
+      sessionId,
+      updatedHistory
+    );
 
     setMapLocations(updatedMap);
     setMemory(updatedMemory);
     setUnlocked(updatedUnlocks);
     setDialogueHistory(updatedHistory);
+    setFollowups(followupSuggestions);
     setLoading(false);
   };
-
-  const staticArcKeys = new Set(["lantern_shrine", "whispering_well", "clocktower"]);
-  const staticMapKeys = new Set(Object.keys(initialMapLocations));
-  console.log(staticMapKeys)
 
 
   return (
@@ -263,15 +265,23 @@ export default function WhispersOfTheHollow() {
           </div>
           <div className="px-4 pb-4">
             <div className="space-y-2">
-              {choices.map((choice, idx) => (
+              {(followups.length > 0 ? followups : choices).map((choice, idx) => (
                 <button
                   key={idx}
                   onClick={() => handleUserInput(choice)}
-                  className="w-full px-4 py-2 bg-gray-200 hover:bg-gray-300 text-black rounded"
+                  className="w-full px-4 py-2 bg-gray-200 hover:bg-gray-300 text-black rounded flex items-center space-x-2"
                 >
-                  {choice}
+                  {followups.length > 0 && (
+                    <img
+                      src="/images/ai_wand.png"
+                      alt="AI"
+                      className="w-10 h-10 inline-block animate-pulseWand"
+                    />
+                  )}
+                  <span>{choice}</span>
                 </button>
               ))}
+
             </div>
             <div className="flex mt-2">
               <input

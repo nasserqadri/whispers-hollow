@@ -254,3 +254,34 @@ Message: {query.user_input}
 @app.get("/health")
 def health_check():
     return {"status": "ok"}
+
+@app.post("/suggest")
+async def suggest_followups(query: GhostQuery):
+    history = "\n".join(query.dialogue_history[-5:])
+    prompt = f"""
+You are an AI game assistant. Given the player's last message and recent conversation, generate 3 short, natural follow-up questions they might ask next.
+
+Conversation history:
+{history}
+
+Last message: {query.user_input}
+
+Reply only with a JSON list of 3 strings, in this format:  ["question1", "question2", "question3"]
+
+    """
+
+    try:
+        response = client.models.generate_content(
+            model='gemini-2.0-flash-001',
+            contents=prompt,
+            config=types.GenerateContentConfig(response_mime_type='application/json'),
+        )
+
+        
+        suggestions = extract_json_object(response.text.strip())
+        print(suggestions)
+        if isinstance(suggestions, list):
+            return {"questions": suggestions}
+        return {"questions": []}
+    except Exception as e:
+        return {"error": str(e), "questions": []}
