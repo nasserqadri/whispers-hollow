@@ -105,6 +105,13 @@ async def talk_to_ghost(query: GhostQuery):
     STORY_ARCS = SESSION_ARCS[session_id]
     ALL_KNOWN_UNLOCKS = SESSION_UNLOCKS[session_id]
 
+    if not ALL_KNOWN_UNLOCKS:
+        ALL_KNOWN_UNLOCKS.update({
+            item
+            for arc in STORY_ARCS.values()
+            for item in arc.get("required", []) + arc.get("optional", [])
+        })
+
     conversation_history = "\n".join(query.dialogue_history[-5:])
     discoveries = [m for m in query.memory if ':' in m]
     questions = [m for m in query.memory if ':' not in m]

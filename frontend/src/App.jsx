@@ -24,9 +24,9 @@ const choices = [
 ];
 
 const MAP_LOCATIONS = {
-  "map:lantern_shrine": { label: "Lantern Shrine", x: "30%", y: "60%" },
-  "map:whispering_well": { label: "Whispering Well", x: "65%", y: "50%" },
-  "map:clocktower": { label: "Clocktower", x: "78%", y: "20%" },
+  "map:lantern_shrine": { label: "Lantern Shrine", x: "23%", y: "19%" },
+  "map:whispering_well": { label: "Whispering Well", x: "80%", y: "65%" },
+  "map:clocktower": { label: "Clocktower", x: "80%", y: "28%" },
 };
 
 const whisperSound = new Howl({
