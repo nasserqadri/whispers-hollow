@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: ghost-backend
+    env: python
+    region: oregon
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn main:app --host 0.0.0.0 --port 8000
+    envVars:
+      - key: GEMINI_API_KEY
+        value: YOUR_ACTUAL_GEMINI_KEY   # Or leave blank and set in Render dashboard

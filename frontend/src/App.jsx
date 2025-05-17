@@ -17,6 +17,13 @@ const ghostAura = {
   peaceful: 'from-emerald-200 via-green-300 to-teal-200'
 };
 
+const ghostMoodGlow = {
+  curious: 'shadow-[0_0_20px_4px_rgba(253,224,71,0.5)]',
+  angry: 'shadow-[0_0_20px_4px_rgba(220,38,38,0.5)]',
+  sad: 'shadow-[0_0_20px_4px_rgba(139,92,246,0.5)]',
+  peaceful: 'shadow-[0_0_20px_4px_rgba(52,211,153,0.5)]'
+};
+
 const choices = [
   "What do you mean?",
   "Who is watching?",
@@ -85,6 +92,21 @@ export default function WhispersOfTheHollow() {
     }
   }, [mood]);
 
+  const currentObjective = () => {
+    for (const [arcKey, arc] of Object.entries(storyArcs)) {
+      const state = arcStates[arcKey];
+      if (["active", "discovered"].includes(state)) {
+        const missing = arc.required?.filter(req => !memory.includes(req));
+        if (missing?.length > 0) {
+          const item = missing[0];
+          const label = item.replace(/^.*:/, '').replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+          return `Current Objective: Find ${label}`;
+        }
+      }
+    }
+    return null;
+  };
+
   const handleUserInput = async (text) => {
     setLoading(true);
     setDialogue("...");
@@ -144,7 +166,9 @@ export default function WhispersOfTheHollow() {
 
         {/* Ghost + Mood */}
         <div className="flex items-center space-x-4 bg-white/20 p-3 rounded shadow">
-          <img src={ghosts[selectedGhost].portrait} className="w-16 h-16 rounded-full" alt="Ghost" />
+          <div className={`w-16 h-16 rounded-full ${ghostMoodGlow[mood]} transition-all duration-500`}>
+            <img src={ghosts[selectedGhost].portrait} className="rounded-full w-full h-full" alt="Ghost" />
+          </div>
           <div>
             <h2 className="text-xl font-semibold">{selectedGhost}</h2>
             <p className="text-sm text-gray-200">Mood: {mood}</p>
@@ -157,6 +181,11 @@ export default function WhispersOfTheHollow() {
             Spirit Channel
           </div>
           <div className="p-4 min-h-[100px] text-white font-serif tracking-wide leading-relaxed">
+            {currentObjective() && (
+              <div className="mb-2 text-sm text-rose-200 italic bg-rose-900/30 px-3 py-1 rounded">
+                {currentObjective()}
+              </div>
+            )}
             {loading ? (
               <p className="text-lg italic animate-pulse">The ghost is thinking...</p>
             ) : (
@@ -199,7 +228,7 @@ export default function WhispersOfTheHollow() {
           </div>
         </div>
 
-        {/* Story Arc Journal (Moved here) */}
+        {/* Story Arc Journal */}
         <div className="bg-white/10 p-4 rounded shadow">
           <h2 className="text-lg font-semibold mb-2 text-white">Story Arc Journal</h2>
           {Object.entries(storyArcs).length === 0 ? (
@@ -223,8 +252,7 @@ export default function WhispersOfTheHollow() {
 
       {/* Right Column */}
       <div className="relative z-30 w-1/2 flex flex-col p-4 space-y-4 overflow-y-auto max-h-screen">
-
-        {/* Minimap at top */}
+        {/* Minimap */}
         <div className="relative border border-gray-600 rounded shadow">
           <img src="/images/map-hollow.png" alt="Map of the Hollow" className="w-full rounded" />
           {Object.entries(mapLocations).map(([key, loc]) => {
@@ -247,7 +275,7 @@ export default function WhispersOfTheHollow() {
           })}
         </div>
 
-        {/* Unlocks Panel */}
+        {/* Clue Panel */}
         <div className="bg-white/10 p-4 rounded shadow">
           <h2 className="text-lg font-semibold mb-2 text-white">Discovered Clues</h2>
           {unlocked.length === 0 ? (
