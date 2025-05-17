@@ -31,8 +31,8 @@ export default function IntroModal({ onClose }) {
                         {/* Title and Description */}
                         <div>
                             <h1 className="text-4xl font-bold text-yellow-200">Whispers of the Hollow</h1>
-                            <p className="text-gray-300 mt-2 text-lg max-w-lg">
-                                An AI-powered mystery exploration engine weaving living stories through haunted dialogue and evolving objectives.<br />Everything with an{" "}
+                            <p className="text-gray-300 mt-2 text-lg">
+                                An AI-powered mystery exploration engine weaving living stories through haunted dialogue and evolving objectives. Everything with an{" "}
                                 <img
                                     src="/images/ai_wand.png"
                                     alt="AI"
