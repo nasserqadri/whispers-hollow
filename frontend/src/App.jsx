@@ -39,7 +39,7 @@ const initialMapLocations = {
 };
 
 const whisperSound = new Howl({
-  src: ['/sounds/dungeon_ambient.mp3'],
+  src: ['/sounds/riffusion_choir_haunting.mp3'],
   loop: true,
   volume: 0.4
 });
@@ -93,6 +93,21 @@ export default function WhispersOfTheHollow() {
       return () => clearTimeout(timeout);
     }
   }, [mood]);
+
+  useEffect(() => {
+    const initializeSession = async () => {
+      const { arc_states, story_arcs } = await getGhostReply(
+        selectedGhost,
+        "init",
+        memory,
+        sessionId,
+        []
+      );
+      setArcStates(arc_states);
+      setStoryArcs(story_arcs);
+    };
+    initializeSession();
+  }, []);
 
   const currentObjective = () => {
     for (const [arcKey, arc] of Object.entries(storyArcs)) {
