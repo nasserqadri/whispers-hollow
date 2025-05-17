@@ -207,6 +207,10 @@ export default function WhispersOfTheHollow() {
     setLoading(false);
   };
 
+  const [showAdmin, setShowAdmin] = useState(false);
+
+  const capitalize = str => str ? str[0].toUpperCase() + str.slice(1) : '';
+
 
   return (
     <div className="relative min-h-screen flex flex-row overflow-hidden font-sans bg-black text-white">
@@ -214,26 +218,26 @@ export default function WhispersOfTheHollow() {
       {fadeIn && <div className={`absolute inset-0 z-10 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] ${ghostAura[mood]} animate-fadeAura`} />}
       <div className="absolute inset-0 pointer-events-none bg-black/40 backdrop-blur-sm z-20" />
 
+      {/* Left Panel */}
       <div className="relative z-30 w-1/2 flex flex-col p-4 space-y-4 overflow-y-auto max-h-screen">
         <h1 className="text-3xl font-bold mb-2">Whispers of the Hollow</h1>
 
+        {/* Ghost Mood + Name */}
         <div className="flex items-center space-x-4 bg-white/20 p-3 rounded shadow">
-          <div className={`w-16 h-16 rounded-full ${ghostMoodGlow[mood]} transition-all duration-500`}>
+          <div className={`w-28 h-28 rounded-full ${ghostMoodGlow[mood]} transition-all duration-500`}>
             <img src={ghosts[selectedGhost].portrait} className="rounded-full w-full h-full" alt="Ghost" />
           </div>
+
           <div className="flex items-start space-x-2">
-            <img
-              src="/images/ai_wand.png"
-              alt="AI"
-              className="w-11 h-11 animate-pulseWand"
-            />
+            <img src="/images/ai_wand.png" alt="AI" className="w-11 h-11 animate-pulseWand" />
             <div>
               <h2 className="text-xl font-semibold">{selectedGhost}</h2>
-              <p className="text-xl text-gray-200">Mood: {mood}</p>
+              <p className="text-xl text-gray-200">Mood: {capitalize(mood)}</p>
             </div>
           </div>
         </div>
 
+        {/* Dialogue & Input */}
         <div className="bg-gray-900/90 border border-gray-700 rounded shadow">
           <div className="bg-gray-800 px-4 py-2 border-b border-gray-700 text-sm font-semibold tracking-wider uppercase text-gray-300">
             Spirit Channel
@@ -281,7 +285,6 @@ export default function WhispersOfTheHollow() {
                   <span>{choice}</span>
                 </button>
               ))}
-
             </div>
             <div className="flex mt-2">
               <input
@@ -300,44 +303,78 @@ export default function WhispersOfTheHollow() {
           </div>
         </div>
 
-        <div className="bg-white/10 p-4 rounded shadow">
-          <h2 className="text-lg font-semibold mb-2 text-white">Story Arc Journal</h2>
-          {Object.entries(storyArcs).length === 0 ? (
-            <p className="italic text-gray-400">No arcs yet...</p>
-          ) : (
-            [...Object.entries(storyArcs)]
-              .sort(([aKey], [bKey]) => {
-                const aStatic = staticArcKeys.has(aKey);
-                const bStatic = staticArcKeys.has(bKey);
-                return aStatic === bStatic ? 0 : aStatic ? 1 : -1; // AI arcs first
-              })
-              .map(([arc, details]) => (
+        {/* Toggle Admin Panel */}
+        <button
+          className="mt-4 px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded text-white text-sm tracking-wide"
+          onClick={() => setShowAdmin(!showAdmin)}
+        >
+          {showAdmin ? "Hide Admin Panel" : "Show Admin Panel"}
+        </button>
 
-                <div key={arc} className={`mb-2 p-2 rounded border-l-4
-                ${arcStates[arc] === 'complete' ? 'border-green-500 bg-green-900/30' :
-                    arcStates[arc] === 'active' ? 'border-blue-400 bg-blue-900/30' :
-                      arcStates[arc] === 'discovered' ? 'border-yellow-500 bg-yellow-900/30' :
-                        'border-gray-600 bg-gray-800/40'}`}>
-                  <p className="capitalize font-bold text-white">
-                    {!staticArcKeys.has(arc) && (
-                      <img
-                        src="/images/ai_wand.png"
-                        alt="AI"
-                        className="inline-block w-11 h-11 mr-1 mb-[2px] opacity-90 animate-pulseWand"
-                      />
-                    )}
+        {/* Admin Panel */}
+        {showAdmin && (
+          <div className="bg-gray-800/90 p-4 rounded shadow border border-gray-700">
+            <h2 className="text-lg font-bold mb-3 text-rose-200 uppercase tracking-wider">Admin Panel</h2>
 
-                    {arc.replace(/_/g, ' ')}</p>
-                  <p className="text-gray-300">Status: <span className="capitalize">{arcStates[arc]}</span></p>
-                  <p className="text-gray-400">Required: {details.required?.join(", ")}</p>
-                  {details.optional?.length > 0 && <p className="text-gray-500">Optional: {details.optional?.join(", ")}</p>}
-                </div>
-              ))
-          )}
-        </div>
+            {/* Story Arc Journal */}
+            <div className="mb-6">
+              <h3 className="text-md font-semibold mb-2 text-white">Story Arc Journal</h3>
+              {Object.entries(storyArcs).length === 0 ? (
+                <p className="italic text-gray-400">No arcs yet...</p>
+              ) : (
+                [...Object.entries(storyArcs)]
+                  .sort(([aKey], [bKey]) => {
+                    const aStatic = staticArcKeys.has(aKey);
+                    const bStatic = staticArcKeys.has(bKey);
+                    return aStatic === bStatic ? 0 : aStatic ? 1 : -1;
+                  })
+                  .map(([arc, details]) => (
+                    <div
+                      key={arc}
+                      className={`mb-2 p-2 rounded border-l-4
+                        ${arcStates[arc] === 'complete' ? 'border-green-500 bg-green-900/30' :
+                          arcStates[arc] === 'active' ? 'border-blue-400 bg-blue-900/30' :
+                            arcStates[arc] === 'discovered' ? 'border-yellow-500 bg-yellow-900/30' :
+                              'border-gray-600 bg-gray-800/40'}`}
+                    >
+                      <p className="capitalize font-bold text-white">
+                        {!staticArcKeys.has(arc) && (
+                          <img
+                            src="/images/ai_wand.png"
+                            alt="AI"
+                            className="inline-block w-11 h-11 mr-1 mb-[2px] opacity-90 animate-pulseWand"
+                          />
+                        )}
+                        {arc.replace(/_/g, ' ')}
+                      </p>
+                      <p className="text-gray-300">Status: <span className="capitalize">{arcStates[arc]}</span></p>
+                      <p className="text-gray-400">Required: {details.required?.join(", ")}</p>
+                      {details.optional?.length > 0 && (
+                        <p className="text-gray-500">Optional: {details.optional?.join(", ")}</p>
+                      )}
+                    </div>
+                  ))
+              )}
+            </div>
+
+            {/* Conversation History */}
+            <div>
+              <h3 className="text-md font-semibold mb-2 text-white">Conversation History</h3>
+              <div className="bg-gray-900/80 text-gray-100 p-3 rounded shadow max-h-40 overflow-y-auto">
+                <ul className="space-y-1 text-sm">
+                  {dialogueHistory.map((line, idx) => (
+                    <li key={idx}>{line}</li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
+      {/* Right Panel */}
       <div className="relative z-30 w-1/2 flex flex-col p-4 space-y-4 overflow-y-auto max-h-screen">
+        {/* Map */}
         <div className="relative border border-gray-600 rounded shadow">
           <img src="/images/map-hollow.png" alt="Map of the Hollow" className="w-full rounded" />
           {Object.entries(mapLocations).map(([key, loc]) => {
@@ -371,9 +408,9 @@ export default function WhispersOfTheHollow() {
               </div>
             );
           })}
-
         </div>
 
+        {/* Discovered Clues */}
         <div className="bg-white/10 p-4 rounded shadow">
           <h2 className="text-lg font-semibold mb-2 text-white">Discovered Clues</h2>
           {unlocked.length === 0 ? (
@@ -386,16 +423,8 @@ export default function WhispersOfTheHollow() {
             </ul>
           )}
         </div>
-
-        <div className="bg-gray-900/80 text-gray-100 p-4 rounded shadow max-h-60 overflow-y-auto">
-          <h2 className="text-lg font-semibold mb-2 text-white">Conversation History </h2>
-          <ul className="space-y-1">
-            {dialogueHistory.map((line, idx) => (
-              <li key={idx}>{line}</li>
-            ))}
-          </ul>
-        </div>
       </div>
     </div>
   );
+
 }
