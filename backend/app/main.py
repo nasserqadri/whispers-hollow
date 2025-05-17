@@ -183,7 +183,7 @@ Message: {query.user_input}
         new_arc_allowed = len(STORY_ARCS) < 5
         dynamic_arc_instruction = (
             "You may define ONE new story arc if and only if there are fewer than 5 total story arcs.\n"
-            "It must contain only ONE required item, and that item must be a new map location unlock from the form 'map:location_id'.\n"
+            "It must contain only ONE required item, and that item must be a new map location unlock with the form 'map:location_id'.\n"
             "Example structure:\n"
             "{ \"key\": \"mist_bridge\", \"label\": \"Mist Bridge\", \"required\": [\"map:mist_bridge\"] }"
             if new_arc_allowed else ""
@@ -228,6 +228,7 @@ Message: {query.user_input}
                         UNLOCK_DESCRIPTIONS[unlock_id] = f"a location known as {label}, rumored to hold secrets of the Hollow"
 
         arc_states = compute_arc_states(query.memory + unlocks, STORY_ARCS)
+        print(STORY_ARCS)
 
         return {
             "reply": reply,

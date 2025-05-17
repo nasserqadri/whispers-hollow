@@ -23,10 +23,10 @@ const choices = [
   "I’m not afraid of her."
 ];
 
-const MAP_LOCATIONS = {
-  "map:lantern_shrine": { label: "Lantern Shrine", x: "23%", y: "19%" },
-  "map:whispering_well": { label: "Whispering Well", x: "80%", y: "65%" },
-  "map:clocktower": { label: "Clocktower", x: "80%", y: "28%" },
+const initialMapLocations = {
+  "map:lantern_shrine": { label: "Lantern Shrine", x: "23%", y: "19%", opacity: 1.0 },
+  "map:whispering_well": { label: "Whispering Well", x: "80%", y: "65%", opacity: 1.0 },
+  "map:clocktower": { label: "Clocktower", x: "80%", y: "28%", opacity: 1.0 }
 };
 
 const whisperSound = new Howl({
@@ -78,6 +78,7 @@ export default function WhispersOfTheHollow() {
   const [unlocked, setUnlocked] = useState([]);
   const [dialogueHistory, setDialogueHistory] = useState([]);
   const [sessionId] = useState(() => crypto.randomUUID());
+  const [mapLocations, setMapLocations] = useState(initialMapLocations);
 
   const discoveredMapMarkers = unlocked.filter(u => u.startsWith("map:"));
 
@@ -114,6 +115,23 @@ export default function WhispersOfTheHollow() {
     const updatedMemory = Array.from(new Set([...memory, text, ...unlocks]));
     const updatedUnlocks = Array.from(new Set([...unlocked, ...unlocks]));
     const updatedHistory = [...dialogueHistory, `User: ${text}`, `Ghost: ${reply}`];
+
+    // dynamically add new map locations
+    const newMapUnlocks = unlocks.filter(u => u.startsWith("map:"));
+    const updatedMap = { ...mapLocations };
+    newMapUnlocks.forEach(loc => {
+      if (!updatedMap[loc]) {
+        updatedMap[loc] = {
+          label: loc.replace(/^map:/, '').replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
+          x: "50%",
+          y: "50%",
+          opacity: 1.0
+        };
+      } else {
+        updatedMap[loc].opacity = 1.0;
+      }
+    });
+    setMapLocations(updatedMap);
 
     setMemory(updatedMemory);
     setUnlocked(updatedUnlocks);
@@ -178,25 +196,23 @@ export default function WhispersOfTheHollow() {
           )}
         </div>
 
-
         {/* MINIMAP */}
         <div className="relative w-full max-w-xl mt-6 border border-gray-600 rounded shadow">
           <img src="/images/map-hollow.png" alt="Map of the Hollow" className="w-full rounded" />
-          {discoveredMapMarkers.map(marker => {
-            const loc = MAP_LOCATIONS[marker];
-            if (!loc) return null;
+          {Object.entries(mapLocations).map(([key, loc]) => {
+            const isUnlocked = discoveredMapMarkers.includes(key);
             return (
               <div
-                key={marker}
-                className="absolute bg-yellow-200 text-black text-xs px-2 py-1 rounded-full shadow border border-yellow-600"
+                key={key}
+                className="absolute text-black text-xs px-2 py-1 rounded-full shadow border border-yellow-600 bg-yellow-200 transition-opacity duration-700"
                 style={{
-                  position: 'absolute',
                   left: loc.x,
                   top: loc.y,
-                  transform: 'translate(-50%, -50%)'
+                  transform: 'translate(-50%, -50%)',
+                  opacity: isUnlocked ? 1.0 : loc.opacity ?? 0.2
                 }}
               >
-                {loc.label}
+                {loc.label} {isUnlocked && "✅"}
               </div>
             );
           })}
@@ -217,6 +233,7 @@ export default function WhispersOfTheHollow() {
               <p className="text-lg italic animate-pulse">The ghost is thinking...</p>
             ) : (
               <TypeAnimation
+                key={dialogue}
                 sequence={[dialogue, 1000]}
                 wrapper="p"
                 speed={75}
