@@ -295,33 +295,32 @@ export default function WhispersOfTheHollow() {
 
   return (
     <div className="relative min-h-screen font-sans bg-black text-white overflow-hidden">
+    {showIntroModal && <IntroModal onClose={() => setShowIntroModal(false)} />}
 
-      {showIntroModal && <IntroModal onClose={() => setShowIntroModal(false)} />}
+    {/* Background layers */}
+    <div className={`absolute inset-0 z-0 transition-opacity duration-1000 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] ${ghostAura[prevMood]}`} />
+    {mood !== prevMood && (
+      <div className={`absolute inset-0 z-10 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] ${ghostAura[mood]} opacity-0 animate-fadeIn`} />
+    )}
+    <div className="absolute inset-0 pointer-events-none bg-black/40 backdrop-blur-sm z-20" />
 
-      {/* Background layers */}
-      <div className={`absolute inset-0 z-0 transition-opacity duration-1000 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] ${ghostAura[prevMood]}`} />
-      {mood !== prevMood && (
-        <div className={`absolute inset-0 z-10 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] ${ghostAura[mood]} opacity-0 animate-fadeIn`} />
-      )}
-      <div className="absolute inset-0 pointer-events-none bg-black/40 backdrop-blur-sm z-20" />
+    {/* Top Title Bar */}
+    <div className="relative z-30 w-full p-6 pb-2">
+      <h1 className="text-4xl font-bold text-center text-white">Whispers of the Hollow</h1>
+    </div>
 
-      {/* Top Title Bar */}
-      <div className="relative z-30 w-full p-6 pb-2">
-        <h1 className="text-4xl font-bold text-center text-white">Whispers of the Hollow</h1>
-      </div>
-
-      {/* Main Content */}
-      <div className="relative z-30 flex flex-row w-full px-4 space-x-4 max-h-[calc(100vh-80px)] overflow-y-auto">
-        {/* Left Panel */}
-
-        <div className="relative z-30 w-1/2 flex flex-col p-4 space-y-4 overflow-y-auto max-h-screen">
-
-          {/* Ghost Panel */}
-          <div className="bg-white/20 rounded shadow border border-gray-600 overflow-hidden">
-            <div className="bg-gray-800 px-4 py-2 border-b border-gray-700 text-sm font-semibold tracking-wider uppercase text-gray-300">
-              You are currently speaking to...
-            </div>
-            <div className="flex items-center space-x-4 p-4">
+    {/* Main Content */}
+    <div className="relative z-30 flex flex-row w-full px-4 space-x-4 max-h-[calc(100vh-80px)] overflow-y-auto">
+      {/* Left Panel */}
+      <div className="w-1/2 flex flex-col space-y-4 overflow-y-auto max-h-screen p-4">
+        {/* Spirit Channel Panel (Combined Ghost + Dialogue) */}
+        <div className="bg-gray-900/90 border border-gray-700 rounded shadow overflow-hidden">
+          <div className="bg-gray-800 px-4 py-2 border-b border-gray-700 text-sm font-semibold tracking-wider uppercase text-gray-300">
+            Spirit Channel
+          </div>
+          <div className="p-4 space-y-4">
+            {/* Ghost Info */}
+            <div className="flex items-center space-x-4">
               <div className={`w-28 h-28 rounded-full ${ghostMoodGlow[mood]} transition-all duration-500`}>
                 <img src={ghosts[selectedGhost].portrait} className="rounded-full w-full h-full" alt="Ghost" />
               </div>
@@ -333,23 +332,18 @@ export default function WhispersOfTheHollow() {
                 </div>
               </div>
             </div>
-          </div>
 
-          {/* Dialogue & Input */}
-          <div className="bg-gray-900/90 border border-gray-700 rounded shadow">
-            <div className="bg-gray-800 px-4 py-2 border-b border-gray-700 text-sm font-semibold tracking-wider uppercase text-gray-300">
-              Your Conversation
-            </div>
-            <div className="p-4 min-h-[100px] text-white font-serif tracking-wide leading-relaxed">
+            {/* Objective + Dialogue */}
+            <div className="font-serif text-lg tracking-wide leading-relaxed text-white">
               {currentObjective() && (
                 <div className="mb-2 text-sm text-rose-200 italic bg-rose-900/30 px-3 py-1 rounded">
                   {currentObjective()}
                 </div>
               )}
               {loading ? (
-                <p className="text-lg italic animate-pulse">The ghost is thinking...</p>
+                <p className="italic animate-pulse">The ghost is thinking...</p>
               ) : (
-                <p className="text-lg flex items-start gap-2">
+                <p className="flex items-start gap-2">
                   <img
                     src="/images/ai_wand.png"
                     alt="AI"
@@ -365,55 +359,58 @@ export default function WhispersOfTheHollow() {
                 </p>
               )}
             </div>
-            <div className="px-4 pb-4">
-              <div className="space-y-2">
-                {(followups.length > 0 ? followups : choices).map((choice, idx) => (
-                  <button
-                    key={idx}
-                    onClick={() => handleUserInput(choice)}
-                    className="w-full px-4 py-2 bg-gray-200 hover:bg-gray-300 text-black rounded flex items-center space-x-2"
-                  >
-                    {followups.length > 0 && (
-                      <img
-                        src="/images/ai_wand.png"
-                        alt="AI"
-                        className="w-10 h-10 inline-block animate-pulseWand"
-                      />
-                    )}
-                    <span>{choice}</span>
-                  </button>
-                ))}
-              </div>
-              <div className="flex mt-2">
-                <input
-                  value={customInput}
-                  onChange={(e) => setCustomInput(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' && customInput.trim()) {
-                      handleUserInput(customInput);
-                      setCustomInput('');
-                    }
-                  }}
-                  placeholder="Speak your mind..."
-                  className="flex-grow bg-gray-800 text-white p-2 rounded-l-md placeholder-gray-400"
-                />
+
+            {/* Followup or Choices */}
+            <div className="space-y-2 mt-4">
+              {(followups.length > 0 ? followups : choices).map((choice, idx) => (
                 <button
-                  onClick={() => handleUserInput(customInput)}
-                  className="bg-rose-500 px-4 py-2 text-white rounded-r-md hover:bg-rose-400"
+                  key={idx}
+                  onClick={() => handleUserInput(choice)}
+                  className="w-full px-4 py-2 bg-gray-200 hover:bg-gray-300 text-black rounded flex items-center space-x-2"
                 >
-                  Send
+                  {followups.length > 0 && (
+                    <img
+                      src="/images/ai_wand.png"
+                      alt="AI"
+                      className="w-10 h-10 inline-block animate-pulseWand"
+                    />
+                  )}
+                  <span>{choice}</span>
                 </button>
-              </div>
+              ))}
+            </div>
+
+            {/* Input */}
+            <div className="flex mt-4">
+              <input
+                value={customInput}
+                onChange={(e) => setCustomInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && customInput.trim()) {
+                    handleUserInput(customInput);
+                    setCustomInput('');
+                  }
+                }}
+                placeholder="Type your message to the ghost..."
+                className="flex-grow bg-gray-800 text-white p-2 rounded-l-md placeholder-gray-400"
+              />
+              <button
+                onClick={() => handleUserInput(customInput)}
+                className="bg-rose-500 px-4 py-2 text-white rounded-r-md hover:bg-rose-400"
+              >
+                Send
+              </button>
             </div>
           </div>
+        </div>
 
-          {/* Toggle Admin Panel */}
-          <button
-            className="mt-4 px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded text-white text-sm tracking-wide"
-            onClick={() => setShowAdmin(!showAdmin)}
-          >
-            {showAdmin ? "Hide Admin Panel" : "Show Admin Panel"}
-          </button>
+        {/* Toggle Admin Panel */}
+        <button
+          className="mt-2 px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded text-white text-sm tracking-wide"
+          onClick={() => setShowAdmin(!showAdmin)}
+        >
+          {showAdmin ? "Hide Admin Panel" : "Show Admin Panel"}
+        </button>
 
           {/* Admin Panel */}
           {showAdmin && (
