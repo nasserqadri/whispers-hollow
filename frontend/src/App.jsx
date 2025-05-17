@@ -164,6 +164,21 @@ export default function WhispersOfTheHollow() {
           </ul>
         </div>
 
+        {/* UNLOCKS PANEL */}
+        <div className="bg-white/70 backdrop-blur-md p-4 rounded-md mb-4 w-full max-w-xl shadow text-sm text-gray-800">
+          <h2 className="text-lg font-semibold mb-2">Discovered Clues</h2>
+          {unlocked.length === 0 ? (
+            <p className="italic text-gray-600">No clues yet...</p>
+          ) : (
+            <ul className="list-disc list-inside space-y-1">
+              {unlocked.map((item, idx) => (
+                <li key={idx} className="capitalize">{item.replace(/[:_]/g, ' ')}</li>
+              ))}
+            </ul>
+          )}
+        </div>
+
+
         {/* MINIMAP */}
         <div className="relative w-full max-w-xl mt-6 border border-gray-600 rounded shadow">
           <img src="/images/map-hollow.png" alt="Map of the Hollow" className="w-full rounded" />
@@ -204,7 +219,7 @@ export default function WhispersOfTheHollow() {
               <TypeAnimation
                 sequence={[dialogue, 1000]}
                 wrapper="p"
-                speed={50}
+                speed={75}
                 className="text-lg"
                 cursor={false}
               />
