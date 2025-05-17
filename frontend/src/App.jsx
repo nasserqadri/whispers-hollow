@@ -148,14 +148,24 @@ export default function WhispersOfTheHollow() {
         }
         updatedMap[loc] = { label, x, y, opacity: 1.0 };
 
-        // Show toast notification
         toast.success(`New map location unlocked: ${label}`, {
-          duration: 5000, // show for 5 seconds
+          duration: 5000,
         });
-        
       } else if (unlocks.includes(loc)) {
         updatedMap[loc].opacity = 1.0;
       }
+    });
+
+    // 🔔 Clue notifications
+    const newlyDiscoveredClues = updatedUnlocks.filter(
+      clue => !unlocked.includes(clue) && !clue.startsWith("map:")
+    );
+
+    newlyDiscoveredClues.forEach(clue => {
+      const label = clue.replace(/^.*:/, '').replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+      toast.success(`New clue discovered: ${label}`, {
+        duration: 5000,
+      });
     });
 
     const followupSuggestions = await getFollowups(selectedGhost, text, updatedMemory, sessionId, updatedHistory);
@@ -184,7 +194,31 @@ export default function WhispersOfTheHollow() {
 
   return (
     <div className="relative min-h-screen font-sans bg-black text-white overflow-hidden">
-      <Toaster position="top-center" reverseOrder={false} />
+      <Toaster
+        position="bottom-center"
+        reverseOrder={false}
+        toastOptions={{
+          style: {
+            background: '#1f1f1f',
+            color: '#f0f0f0',
+            border: '1px solid #3b3b3b',
+            padding: '16px',
+            fontSize: '0.9rem',
+          },
+          success: {
+            iconTheme: {
+              primary: '#10b981', // green-500
+              secondary: '#1f2937', // gray-800
+            },
+          },
+          error: {
+            iconTheme: {
+              primary: '#f87171', // red-400
+              secondary: '#1f2937',
+            },
+          },
+        }}
+      />
       {showIntroModal && <IntroModal onClose={() => setShowIntroModal(false)} />}
       <div className={`absolute inset-0 z-0 transition-opacity duration-1000 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] ${ghostAura[prevMood]}`} />
       {mood !== prevMood && (
