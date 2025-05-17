@@ -79,6 +79,13 @@ export default function WhispersOfTheHollow() {
   const discoveredMapMarkers = unlocked.filter(u => u.startsWith("map:"));
 
   useEffect(() => {
+    // Wake the backend if it's asleep
+    fetch(`${baseURL}/health`).catch(err => {
+      console.warn("Health check failed:", err);
+    });
+  }, []);
+    
+  useEffect(() => {
     whisperSound.play();
     return () => whisperSound.stop();
   }, []);
