@@ -116,28 +116,31 @@ export default function GhostChatPanel({
             </div>
 
             {/* Follow-Up Suggestions */}
-            <div className="px-4 pb-4 space-y-2">
-                {(followups.length > 0 || choices.length > 0) && (
-                    <p className="text-sm text-gray-400 italic mb-1">Or you can ask…</p>
-                )}
-                {(followups.length > 0 ? followups : choices).map((choice, idx) => (
-                    <button
-                        key={idx}
-                        onClick={() => handleUserInput(choice)}
-                        className="w-full px-4 py-2 bg-gray-800 text-white border border-gray-600 hover:bg-gray-700 transition duration-200 rounded flex items-center space-x-2 animate-fade-in"
-                        style={{ animationDelay: `${idx * 0.1}s` }}
-                    >
-                        {followups.length > 0 && (
-                            <img
-                                src="/images/ai_wand.png"
-                                alt="AI"
-                                className="w-10 h-10 inline-block animate-pulseWand"
-                            />
-                        )}
-                        <span className="text-sm">{choice}</span>
-                    </button>
-                ))}
-            </div>
+            {(followups.length > 0 || choices.length > 0) && (
+                <div className="px-4 pb-6">
+                    <p className="text-sm text-gray-400 italic mb-2 text-center">Or you can ask…</p>
+                    <div className="flex flex-col items-center space-y-2">
+                        {(followups.length > 0 ? followups : choices).map((choice, idx) => (
+                            <button
+                                key={idx}
+                                onClick={() => handleUserInput(choice)}
+                                className="w-full max-w-xl px-4 py-2 bg-gray-800 text-white border border-gray-600 hover:bg-gray-700 transition duration-200 rounded flex items-center space-x-2 animate-fade-in"
+                                style={{ animationDelay: `${idx * 0.1}s` }}
+                            >
+                                {followups.length > 0 && (
+                                    <img
+                                        src="/images/ai_wand.png"
+                                        alt="AI"
+                                        className="w-6 h-6 inline-block animate-pulseWand"
+                                    />
+                                )}
+                                <span className="text-sm">{choice}</span>
+                            </button>
+                        ))}
+                    </div>
+                </div>
+            )}
+
         </div>
     );
 }
