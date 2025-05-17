@@ -234,7 +234,9 @@ Message: {query.user_input}
             "reply": reply,
             "mood": mood,
             "unlocks": unlocks,
-            "arc_states": arc_states
+            "arc_states": arc_states,
+            "story_arcs": STORY_ARCS
+
         }
 
     except Exception as e:
