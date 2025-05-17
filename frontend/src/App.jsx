@@ -60,6 +60,8 @@ const getGhostReply = async (ghost, userInput, memory = [], sessionId, dialogueH
   };
 };
 
+
+
 export default function WhispersOfTheHollow() {
   const [selectedGhost] = useState("Lantern Girl");
   const [dialogue, setDialogue] = useState(ghosts[selectedGhost].intro);
@@ -84,7 +86,7 @@ export default function WhispersOfTheHollow() {
       console.warn("Health check failed:", err);
     });
   }, []);
-    
+
   useEffect(() => {
     whisperSound.play();
     return () => whisperSound.stop();
@@ -158,17 +160,39 @@ export default function WhispersOfTheHollow() {
     ]);
 
     const updatedMap = { ...mapLocations };
+    let dynamicIndex = Object.keys(updatedMap).filter(k => !staticMapKeys.has(k)).length;
+
     knownMapLocations.forEach(loc => {
+      const isDynamic = !staticMapKeys.has(loc);
+
       if (!updatedMap[loc]) {
+        const label = loc.replace(/^map:/, '').replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+        let x = "50%", y = "50%"; // default
+
+        if (isDynamic) {
+          if (dynamicIndex === 0) {
+            x = "50%"; y = "50%";
+          } else if (dynamicIndex === 1) {
+            x = "20%"; y = "85%";
+          } else if (dynamicIndex === 2) {
+            x = "80%"; y = "80%";
+          }
+          dynamicIndex++;
+        }
+
         updatedMap[loc] = {
-          label: loc.replace(/^map:/, '').replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
-          x: "50%", y: "50%", opacity: 1.0
+          label,
+          x,
+          y,
+          opacity: 1.0
         };
       }
+
       if (unlocks.includes(loc)) {
         updatedMap[loc].opacity = 1.0;
       }
     });
+
 
     setMapLocations(updatedMap);
     setMemory(updatedMemory);
@@ -176,6 +200,11 @@ export default function WhispersOfTheHollow() {
     setDialogueHistory(updatedHistory);
     setLoading(false);
   };
+
+  const staticArcKeys = new Set(["lantern_shrine", "whispering_well", "clocktower"]);
+  const staticMapKeys = new Set(Object.keys(initialMapLocations));
+  console.log(staticMapKeys)
+
 
   return (
     <div className="relative min-h-screen flex flex-row overflow-hidden font-sans bg-black text-white">
@@ -190,9 +219,16 @@ export default function WhispersOfTheHollow() {
           <div className={`w-16 h-16 rounded-full ${ghostMoodGlow[mood]} transition-all duration-500`}>
             <img src={ghosts[selectedGhost].portrait} className="rounded-full w-full h-full" alt="Ghost" />
           </div>
-          <div>
-            <h2 className="text-xl font-semibold">{selectedGhost}</h2>
-            <p className="text-sm text-gray-200">Mood: {mood}</p>
+          <div className="flex items-start space-x-2">
+            <img
+              src="/images/ai_wand.png"
+              alt="AI"
+              className="w-11 h-11 animate-pulseWand"
+            />
+            <div>
+              <h2 className="text-xl font-semibold">{selectedGhost}</h2>
+              <p className="text-xl text-gray-200">Mood: {mood}</p>
+            </div>
           </div>
         </div>
 
@@ -209,14 +245,20 @@ export default function WhispersOfTheHollow() {
             {loading ? (
               <p className="text-lg italic animate-pulse">The ghost is thinking...</p>
             ) : (
-              <TypeAnimation
-                key={dialogue}
-                sequence={[dialogue, 1000]}
-                wrapper="p"
-                speed={75}
-                className="text-lg"
-                cursor={false}
-              />
+              <p className="text-lg flex items-start gap-2">
+                <img
+                  src="/images/ai_wand.png"
+                  alt="AI"
+                  className="inline-block w-11 h-11 mt-[3px] animate-pulseWand"
+                />
+                <TypeAnimation
+                  key={dialogue}
+                  sequence={[dialogue, 1000]}
+                  wrapper="span"
+                  speed={75}
+                  cursor={false}
+                />
+              </p>
             )}
           </div>
           <div className="px-4 pb-4">
@@ -253,18 +295,34 @@ export default function WhispersOfTheHollow() {
           {Object.entries(storyArcs).length === 0 ? (
             <p className="italic text-gray-400">No arcs yet...</p>
           ) : (
-            Object.entries(storyArcs).map(([arc, details]) => (
-              <div key={arc} className={`mb-2 p-2 rounded border-l-4
+            [...Object.entries(storyArcs)]
+              .sort(([aKey], [bKey]) => {
+                const aStatic = staticArcKeys.has(aKey);
+                const bStatic = staticArcKeys.has(bKey);
+                return aStatic === bStatic ? 0 : aStatic ? 1 : -1; // AI arcs first
+              })
+              .map(([arc, details]) => (
+
+                <div key={arc} className={`mb-2 p-2 rounded border-l-4
                 ${arcStates[arc] === 'complete' ? 'border-green-500 bg-green-900/30' :
-                  arcStates[arc] === 'active' ? 'border-blue-400 bg-blue-900/30' :
-                  arcStates[arc] === 'discovered' ? 'border-yellow-500 bg-yellow-900/30' :
-                  'border-gray-600 bg-gray-800/40'}`}>
-                <p className="capitalize font-bold text-white">{arc.replace(/_/g, ' ')}</p>
-                <p className="text-gray-300">Status: <span className="capitalize">{arcStates[arc]}</span></p>
-                <p className="text-gray-400">Required: {details.required?.join(", ")}</p>
-                {details.optional?.length > 0 && <p className="text-gray-500">Optional: {details.optional?.join(", ")}</p>}
-              </div>
-            ))
+                    arcStates[arc] === 'active' ? 'border-blue-400 bg-blue-900/30' :
+                      arcStates[arc] === 'discovered' ? 'border-yellow-500 bg-yellow-900/30' :
+                        'border-gray-600 bg-gray-800/40'}`}>
+                  <p className="capitalize font-bold text-white">
+                    {!staticArcKeys.has(arc) && (
+                      <img
+                        src="/images/ai_wand.png"
+                        alt="AI"
+                        className="inline-block w-11 h-11 mr-1 mb-[2px] opacity-90 animate-pulseWand"
+                      />
+                    )}
+
+                    {arc.replace(/_/g, ' ')}</p>
+                  <p className="text-gray-300">Status: <span className="capitalize">{arcStates[arc]}</span></p>
+                  <p className="text-gray-400">Required: {details.required?.join(", ")}</p>
+                  {details.optional?.length > 0 && <p className="text-gray-500">Optional: {details.optional?.join(", ")}</p>}
+                </div>
+              ))
           )}
         </div>
       </div>
@@ -274,22 +332,36 @@ export default function WhispersOfTheHollow() {
           <img src="/images/map-hollow.png" alt="Map of the Hollow" className="w-full rounded" />
           {Object.entries(mapLocations).map(([key, loc]) => {
             const isUnlocked = discoveredMapMarkers.includes(key);
+            const isDynamic = !staticMapKeys.has(key);
+
             return (
               <div
                 key={key}
-                className="absolute text-black text-base font-bold px-2 py-1 rounded-full shadow border border-yellow-600 bg-yellow-200 transition-opacity duration-700"
+                className="absolute text-black text-base font-bold px-2 py-1 rounded-full shadow border border-yellow-600 bg-yellow-200 transition-opacity duration-700 flex items-center space-x-1"
                 style={{
                   left: loc.x,
                   top: loc.y,
                   transform: 'translate(-50%, -50%)',
-                  fontSize: '1.25rem',
+                  fontSize: '1.0rem',
                   opacity: isUnlocked ? 1.0 : loc.opacity ?? 0.2
                 }}
               >
-                {loc.label} {isUnlocked && "✅"}
+                <span className="flex items-center space-x-1">
+                  {isDynamic && (
+                    <img
+                      src="/images/ai_wand.png"
+                      alt="AI"
+                      title="AI-generated location"
+                      className="inline-block w-10 h-10 mb-[2px] animate-pulseWand"
+                    />
+                  )}
+                  <span>{loc.label}</span>
+                  {isUnlocked && <span>✅</span>}
+                </span>
               </div>
             );
           })}
+
         </div>
 
         <div className="bg-white/10 p-4 rounded shadow">
@@ -306,7 +378,7 @@ export default function WhispersOfTheHollow() {
         </div>
 
         <div className="bg-gray-900/80 text-gray-100 p-4 rounded shadow max-h-60 overflow-y-auto">
-          <h2 className="text-lg font-semibold mb-2 text-white">Dialogue Log</h2>
+          <h2 className="text-lg font-semibold mb-2 text-white">Conversation History </h2>
           <ul className="space-y-1">
             {dialogueHistory.map((line, idx) => (
               <li key={idx}>{line}</li>
