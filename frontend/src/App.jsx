@@ -24,9 +24,9 @@ const choices = [
 ];
 
 const initialMapLocations = {
-  "map:lantern_shrine": { label: "Lantern Shrine", x: "23%", y: "19%", opacity: 1.0 },
-  "map:whispering_well": { label: "Whispering Well", x: "80%", y: "65%", opacity: 1.0 },
-  "map:clocktower": { label: "Clocktower", x: "80%", y: "28%", opacity: 1.0 }
+  "map:lantern_shrine": { label: "Lantern Shrine", x: "23%", y: "19%", opacity: 0 },
+  "map:whispering_well": { label: "Whispering Well", x: "80%", y: "65%", opacity: 0 },
+  "map:clocktower": { label: "Clocktower", x: "80%", y: "28%", opacity: 0 }
 };
 
 const whisperSound = new Howl({
@@ -53,14 +53,16 @@ const getGhostReply = async (ghost, userInput, memory = [], sessionId, dialogueH
       reply: data.reply || "(The ghost whispers nothing...)",
       mood: data.mood || "curious",
       unlocks: data.unlocks || [],
-      arc_states: data.arc_states || {}
+      arc_states: data.arc_states || {},
+      story_arcs: data.story_arcs || {}
     };
   } catch (e) {
     return {
       reply: "(The connection to the spirit world has failed.)",
       mood: "sad",
       unlocks: [],
-      arc_states: {}
+      arc_states: {},
+      story_arcs: {}
     };
   }
 };
@@ -101,7 +103,7 @@ export default function WhispersOfTheHollow() {
   const handleUserInput = async (text) => {
     setLoading(true);
     setDialogue("...");
-    const { reply, mood: newMood, unlocks, arc_states } = await getGhostReply(
+    const { reply, mood: newMood, unlocks, arc_states, story_arcs } = await getGhostReply(
       selectedGhost,
       text,
       memory,
@@ -116,10 +118,16 @@ export default function WhispersOfTheHollow() {
     const updatedUnlocks = Array.from(new Set([...unlocked, ...unlocks]));
     const updatedHistory = [...dialogueHistory, `User: ${text}`, `Ghost: ${reply}`];
 
-    // dynamically add new map locations
-    const newMapUnlocks = unlocks.filter(u => u.startsWith("map:"));
+    // collect all map locations across arcs
+    const knownMapLocations = new Set([
+      ...unlocks.filter(u => u.startsWith("map:")),
+      ...Object.values(story_arcs || {}).flatMap(arc =>
+        [...(arc.required || []), ...(arc.optional || [])].filter(i => i.startsWith("map:"))
+      )
+    ]);
+
     const updatedMap = { ...mapLocations };
-    newMapUnlocks.forEach(loc => {
+    knownMapLocations.forEach(loc => {
       if (!updatedMap[loc]) {
         updatedMap[loc] = {
           label: loc.replace(/^map:/, '').replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
@@ -127,12 +135,14 @@ export default function WhispersOfTheHollow() {
           y: "50%",
           opacity: 1.0
         };
-      } else {
+      }
+
+      if (unlocks.includes(loc)) {
         updatedMap[loc].opacity = 1.0;
       }
     });
-    setMapLocations(updatedMap);
 
+    setMapLocations(updatedMap);
     setMemory(updatedMemory);
     setUnlocked(updatedUnlocks);
     setDialogueHistory(updatedHistory);
