@@ -12,7 +12,8 @@ module.exports = {
       animation: {
         fadeAura: 'fadeAura 1.5s ease-in-out forwards',
         fogMove: 'fogMove 30s linear infinite alternate',
-        pulseWand: 'pulseWand 2s ease-in-out infinite'
+        pulseWand: 'pulseWand 2s ease-in-out infinite',
+        fadeIn: 'fadeIn 1.5s ease-in-out forwards' // NEW
       },
       keyframes: {
         fadeAura: {
@@ -26,6 +27,10 @@ module.exports = {
         pulseWand: {
           '0%, 100%': { transform: 'scale(1)', opacity: '1' },
           '50%': { transform: 'scale(1.2)', opacity: '0.75' }
+        },
+        fadeIn: { // NEW
+          '0%': { opacity: '0' },
+          '100%': { opacity: '1' }
         }
       }
     }

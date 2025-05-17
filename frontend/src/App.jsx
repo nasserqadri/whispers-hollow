@@ -1,8 +1,16 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { TypeAnimation } from 'react-type-animation';
 import { Howl } from 'howler';
 
 const baseURL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000';
+
+const moodSounds = {
+  curious: new Howl({ src: ['/sounds/riffusion_choir_haunting.mp3'], loop: true, volume: 0 }),
+  angry: new Howl({ src: ['/sounds/epic.mp3'], loop: true, volume: 0 }),
+  sad: new Howl({ src: ['/sounds/riffusion_choir_haunting.mp3'], loop: true, volume: 0 }),
+  peaceful: new Howl({ src: ['/sounds/riffusion_choir_haunting.mp3'], loop: true, volume: 0 })
+};
+
 
 const ghosts = {
   "Lantern Girl": {
@@ -45,25 +53,52 @@ const whisperSound = new Howl({
 });
 
 const getGhostReply = async (ghost, userInput, memory = [], sessionId, dialogueHistory) => {
-  const res = await fetch(`${baseURL}/talk`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ ghost, user_input: userInput, memory, session_id: sessionId, dialogue_history: dialogueHistory })
-  });
-  return await res.json();
+  try {
+    const res = await fetch(`${baseURL}/talk`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ghost, user_input: userInput, memory, session_id: sessionId, dialogue_history: dialogueHistory })
+    });
+
+    if (!res.ok) throw new Error(`Server error ${res.status}: ${res.statusText}`);
+
+    const data = await res.json();
+    return {
+      reply: data.reply || "(The ghost whispers nothing...)",
+      mood: data.mood || "curious",
+      unlocks: data.unlocks || [],
+      arc_states: data.arc_states || {},
+      story_arcs: data.story_arcs || {}
+    };
+  } catch (err) {
+    console.error("Ghost reply error:", err);
+    return {
+      reply: "(The ghost is silent… something's wrong.)",
+      mood: "sad",
+      unlocks: [],
+      arc_states: {},
+      story_arcs: {}
+    };
+  }
 };
 
 const getFollowups = async (ghost, userInput, memory, sessionId, dialogueHistory) => {
-  const res = await fetch(`${baseURL}/suggest`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ ghost, user_input: userInput, memory, session_id: sessionId, dialogue_history: dialogueHistory })
-  });
-  const data = await res.json();
-  console.log(data)
-  return data.questions || [];
-};
+  try {
+    const res = await fetch(`${baseURL}/suggest`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ghost, user_input: userInput, memory, session_id: sessionId, dialogue_history: dialogueHistory })
+    });
 
+    if (!res.ok) throw new Error(`Server error ${res.status}: ${res.statusText}`);
+
+    const data = await res.json();
+    return data.questions || [];
+  } catch (err) {
+    console.warn("Followup suggestion failed:", err);
+    return [];
+  }
+};
 
 
 export default function WhispersOfTheHollow() {
@@ -74,6 +109,8 @@ export default function WhispersOfTheHollow() {
   const [memory, setMemory] = useState([]);
   const [mood, setMood] = useState(ghosts[selectedGhost].mood);
   const [prevMood, setPrevMood] = useState(mood);
+  const [isAngryMusic, setIsAngryMusic] = useState(mood === "angry");
+  const [currentSound, setCurrentSound] = useState(null);
   const [fadeIn, setFadeIn] = useState(false);
   const [arcStates, setArcStates] = useState({});
   const [storyArcs, setStoryArcs] = useState({});
@@ -83,6 +120,7 @@ export default function WhispersOfTheHollow() {
   const [sessionId] = useState(() => crypto.randomUUID());
   const [mapLocations, setMapLocations] = useState(initialMapLocations);
 
+
   const staticArcKeys = new Set(["lantern_shrine", "whispering_well", "clocktower"]);
   const staticMapKeys = new Set(Object.keys(initialMapLocations));
   const discoveredMapMarkers = unlocked.filter(u => u.startsWith("map:"));
@@ -91,21 +129,60 @@ export default function WhispersOfTheHollow() {
     fetch(`${baseURL}/health`).catch(err => console.warn("Health check failed:", err));
   }, []);
 
+  // useEffect(() => {
+  //   whisperSound.play();
+  //   return () => whisperSound.stop();
+  // }, []);
+
   useEffect(() => {
-    whisperSound.play();
-    return () => whisperSound.stop();
+    // Play default music at first load
+    const initialSound = new Howl({
+      src: [mood === "angry" ? '/sounds/epic.mp3' : '/sounds/riffusion_choir_haunting.mp3'],
+      loop: true,
+      volume: 0.4
+    });
+
+    initialSound.play();
+    setCurrentSound(initialSound);
+    setIsAngryMusic(mood === "angry");
+
+    return () => {
+      initialSound.stop();
+      initialSound.unload();
+    };
   }, []);
 
   useEffect(() => {
-    if (mood !== prevMood) {
-      setFadeIn(true);
-      const timeout = setTimeout(() => {
-        setPrevMood(mood);
-        setFadeIn(false);
-      }, 1500);
-      return () => clearTimeout(timeout);
+    const FADE_DURATION = 1500;
+
+    const shouldBeAngry = mood === 'angry';
+    if (shouldBeAngry === isAngryMusic) return; // no change needed
+
+    const newSound = new Howl({
+      src: [shouldBeAngry ? '/sounds/epic.mp3' : '/sounds/riffusion_choir_haunting.mp3'],
+      loop: true,
+      volume: 0
+    });
+
+    const playNewSound = () => {
+      newSound.play();
+      newSound.fade(0, 0.4, FADE_DURATION);
+      setCurrentSound(newSound);
+      setIsAngryMusic(shouldBeAngry);
+    };
+
+    if (currentSound) {
+      currentSound.fade(0.4, 0, FADE_DURATION);
+      currentSound.once('fade', () => {
+        currentSound.stop();
+        currentSound.unload();
+        setTimeout(playNewSound, 100); // slight buffer before next
+      });
+    } else {
+      playNewSound();
     }
   }, [mood]);
+
 
   useEffect(() => {
     const initializeSession = async () => {
@@ -214,8 +291,20 @@ export default function WhispersOfTheHollow() {
 
   return (
     <div className="relative min-h-screen flex flex-row overflow-hidden font-sans bg-black text-white">
-      <div className={`absolute inset-0 z-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] ${ghostAura[prevMood]}`} />
-      {fadeIn && <div className={`absolute inset-0 z-10 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] ${ghostAura[mood]} animate-fadeAura`} />}
+
+      {/* Base background using previous mood */}
+      <div
+        className={`absolute inset-0 z-0 transition-opacity duration-1000 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] ${ghostAura[prevMood]}`}
+      />
+
+      {/* Smooth fade to new mood background */}
+      {mood !== prevMood && (
+        <div
+          key={mood}
+          className={`absolute inset-0 z-10 opacity-0 animate-fadeIn bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] ${ghostAura[mood]}`}
+        />
+      )}
+
       <div className="absolute inset-0 pointer-events-none bg-black/40 backdrop-blur-sm z-20" />
 
       {/* Left Panel */}
