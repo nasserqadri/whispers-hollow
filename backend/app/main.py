@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Request
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import os
@@ -12,7 +12,6 @@ import re
 load_dotenv()
 app = FastAPI()
 
-# Allow frontend access
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -28,10 +27,8 @@ class GhostQuery(BaseModel):
     user_input: str
     memory: list[str] = []
     session_id: str
+    dialogue_history: list[str] = []
 
-# ------------------------------
-# Arc session tracking
-# ------------------------------
 def get_initial_story_arcs():
     return {
         "lantern_shrine": {
@@ -55,9 +52,6 @@ def get_initial_story_arcs():
 SESSION_ARCS = defaultdict(get_initial_story_arcs)
 SESSION_UNLOCKS = defaultdict(lambda: set())
 
-# ------------------------------
-# Utility functions
-# ------------------------------
 def get_arc_state(memory, required, optional=[]):
     mem_set = set(memory)
     req_set = set(required)
@@ -99,9 +93,6 @@ def extract_json_object(text: str):
                 return {}
         return {}
 
-# ------------------------------
-# /talk endpoint
-# ------------------------------
 @app.post("/talk")
 async def talk_to_ghost(query: GhostQuery):
     session_id = query.session_id
@@ -111,19 +102,20 @@ async def talk_to_ghost(query: GhostQuery):
     STORY_ARCS = SESSION_ARCS[session_id]
     ALL_KNOWN_UNLOCKS = SESSION_UNLOCKS[session_id]
 
-    # --- Ghost setup
+    conversation_history = "\n".join(query.dialogue_history[-5:])
     system_prompt = (
         f"You are a ghost named {query.ghost}. You speak cryptically, in riddles, and fragmented memory. "
         f"You are part of a narrative where the player is trying to uncover what happened in the Hollow. "
-        f"You remember these things: {', '.join(query.memory)}. Based on the conversation, you may reveal or suggest dynamic objectives, clues, or insights. "
-        f"You may guide the player with hints, obfuscation, or story beats. A mysterious figure named Elira — a forgotten caretaker of the Hollow — lingers as a central force in the story. Elira is known to have kept journals, whispered to the children, and possibly knows the truth about what fractured the village."
+        f"You remember these things: {', '.join(query.memory)}. "
+        "Elira — a forgotten caretaker of the Hollow — is a central figure in the mystery.\n\n"
+        f"Recent conversation:\n{conversation_history}\n"
+        f"User: {query.user_input}"
     )
-    user_prompt = f"User: {query.user_input}"
 
     try:
         response = client.models.generate_content(
             model='gemini-2.0-flash-001',
-            contents=f"{system_prompt}\n{user_prompt}",
+            contents=system_prompt,
         )
         reply = response.text.strip()
 
@@ -180,7 +172,6 @@ async def talk_to_ghost(query: GhostQuery):
         if not isinstance(unlocks, list):
             unlocks = []
 
-        # Handle new arc if present
         new_arc = response_data.get("new_arc")
         if new_arc:
             arc_key = new_arc.get("key")
