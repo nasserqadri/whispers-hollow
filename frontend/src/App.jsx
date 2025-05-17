@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { TypeAnimation } from 'react-type-animation';
 import { Howl } from 'howler';
 
+const baseURL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000';
+
 const ghosts = {
   "Lantern Girl": {
     portrait: "/images/lantern-girl.png",
@@ -43,7 +45,7 @@ const whisperSound = new Howl({
 });
 
 const getGhostReply = async (ghost, userInput, memory = [], sessionId, dialogueHistory) => {
-  const res = await fetch('http://localhost:8000/talk', {
+  const res = await fetch(`${baseURL}/talk`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ ghost, user_input: userInput, memory, session_id: sessionId, dialogue_history: dialogueHistory })
@@ -155,16 +157,13 @@ export default function WhispersOfTheHollow() {
 
   return (
     <div className="relative min-h-screen flex flex-row overflow-hidden font-sans bg-black text-white">
-      {/* Background Aura */}
       <div className={`absolute inset-0 z-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] ${ghostAura[prevMood]}`} />
       {fadeIn && <div className={`absolute inset-0 z-10 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] ${ghostAura[mood]} animate-fadeAura`} />}
       <div className="absolute inset-0 pointer-events-none bg-black/40 backdrop-blur-sm z-20" />
 
-      {/* Left Column */}
       <div className="relative z-30 w-1/2 flex flex-col p-4 space-y-4 overflow-y-auto max-h-screen">
         <h1 className="text-3xl font-bold mb-2">Whispers of the Hollow</h1>
 
-        {/* Ghost + Mood */}
         <div className="flex items-center space-x-4 bg-white/20 p-3 rounded shadow">
           <div className={`w-16 h-16 rounded-full ${ghostMoodGlow[mood]} transition-all duration-500`}>
             <img src={ghosts[selectedGhost].portrait} className="rounded-full w-full h-full" alt="Ghost" />
@@ -175,7 +174,6 @@ export default function WhispersOfTheHollow() {
           </div>
         </div>
 
-        {/* Chat Window */}
         <div className="bg-gray-900/90 border border-gray-700 rounded shadow">
           <div className="bg-gray-800 px-4 py-2 border-b border-gray-700 text-sm font-semibold tracking-wider uppercase text-gray-300">
             Spirit Channel
@@ -228,7 +226,6 @@ export default function WhispersOfTheHollow() {
           </div>
         </div>
 
-        {/* Story Arc Journal */}
         <div className="bg-white/10 p-4 rounded shadow">
           <h2 className="text-lg font-semibold mb-2 text-white">Story Arc Journal</h2>
           {Object.entries(storyArcs).length === 0 ? (
@@ -250,9 +247,7 @@ export default function WhispersOfTheHollow() {
         </div>
       </div>
 
-      {/* Right Column */}
       <div className="relative z-30 w-1/2 flex flex-col p-4 space-y-4 overflow-y-auto max-h-screen">
-        {/* Minimap */}
         <div className="relative border border-gray-600 rounded shadow">
           <img src="/images/map-hollow.png" alt="Map of the Hollow" className="w-full rounded" />
           {Object.entries(mapLocations).map(([key, loc]) => {
@@ -275,7 +270,6 @@ export default function WhispersOfTheHollow() {
           })}
         </div>
 
-        {/* Clue Panel */}
         <div className="bg-white/10 p-4 rounded shadow">
           <h2 className="text-lg font-semibold mb-2 text-white">Discovered Clues</h2>
           {unlocked.length === 0 ? (
@@ -289,7 +283,6 @@ export default function WhispersOfTheHollow() {
           )}
         </div>
 
-        {/* Dialogue Log */}
         <div className="bg-gray-900/80 text-gray-100 p-4 rounded shadow max-h-60 overflow-y-auto">
           <h2 className="text-lg font-semibold mb-2 text-white">Dialogue Log</h2>
           <ul className="space-y-1">
