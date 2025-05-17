@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { TypeAnimation } from 'react-type-animation';
 import { Howl } from 'howler';
+import IntroModal from './components/IntroModal';
 
 const baseURL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000';
 
@@ -102,6 +103,9 @@ const getFollowups = async (ghost, userInput, memory, sessionId, dialogueHistory
 
 
 export default function WhispersOfTheHollow() {
+  
+  const [showIntroModal, setShowIntroModal] = useState(true);
+
   const [selectedGhost] = useState("Lantern Girl");
   const [dialogue, setDialogue] = useState(ghosts[selectedGhost].intro);
   const [customInput, setCustomInput] = useState("");
@@ -291,6 +295,9 @@ export default function WhispersOfTheHollow() {
 
   return (
     <div className="relative min-h-screen font-sans bg-black text-white overflow-hidden">
+
+      {showIntroModal && <IntroModal onClose={() => setShowIntroModal(false)} />}
+
       {/* Background layers */}
       <div className={`absolute inset-0 z-0 transition-opacity duration-1000 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] ${ghostAura[prevMood]}`} />
       {mood !== prevMood && (
