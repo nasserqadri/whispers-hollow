@@ -290,26 +290,24 @@ export default function WhispersOfTheHollow() {
 
 
   return (
-    <div className="relative min-h-screen flex flex-row overflow-hidden font-sans bg-black text-white">
+    <div className="relative min-h-screen font-sans bg-black text-white overflow-hidden">
+    {/* Background layers */}
+    <div className={`absolute inset-0 z-0 transition-opacity duration-1000 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] ${ghostAura[prevMood]}`} />
+    {mood !== prevMood && (
+      <div className={`absolute inset-0 z-10 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] ${ghostAura[mood]} opacity-0 animate-fadeIn`} />
+    )}
+    <div className="absolute inset-0 pointer-events-none bg-black/40 backdrop-blur-sm z-20" />
 
-      {/* Base background using previous mood */}
-      <div
-        className={`absolute inset-0 z-0 transition-opacity duration-1000 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] ${ghostAura[prevMood]}`}
-      />
+    {/* Top Title Bar */}
+    <div className="relative z-30 w-full p-6 pb-2">
+      <h1 className="text-4xl font-bold text-center text-white">Whispers of the Hollow</h1>
+    </div>
 
-      {/* Smooth fade to new mood background */}
-      {mood !== prevMood && (
-        <div
-          key={mood}
-          className={`absolute inset-0 z-10 opacity-0 animate-fadeIn bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] ${ghostAura[mood]}`}
-        />
-      )}
-
-      <div className="absolute inset-0 pointer-events-none bg-black/40 backdrop-blur-sm z-20" />
-
+    {/* Main Content */}
+    <div className="relative z-30 flex flex-row w-full px-4 space-x-4 max-h-[calc(100vh-80px)] overflow-y-auto">
       {/* Left Panel */}
+
       <div className="relative z-30 w-1/2 flex flex-col p-4 space-y-4 overflow-y-auto max-h-screen">
-        <h1 className="text-3xl font-bold mb-2">Whispers of the Hollow</h1>
 
         {/* Ghost Mood + Name */}
         <div className="flex items-center space-x-4 bg-white/20 p-3 rounded shadow">
@@ -513,6 +511,7 @@ export default function WhispersOfTheHollow() {
           )}
         </div>
       </div>
+    </div>
     </div>
   );
 
