@@ -42,10 +42,6 @@ def get_initial_story_arcs():
         "clocktower": {
             "required": ["map:clocktower", "journal:elira_last_entry"],
             "optional": ["clue:stopped_at_midnight"]
-        },
-        "elira_thread": {
-            "required": ["npc:elira_fragment", "journal:coat_markings"],
-            "optional": ["clue:memory_token"]
         }
     }
 
@@ -111,6 +107,17 @@ async def talk_to_ghost(query: GhostQuery):
             for arc in STORY_ARCS.values()
             for item in arc.get("required", []) + arc.get("optional", [])
         })
+
+    # Init path: return arcs and state only
+    if query.user_input.strip().lower() == "init":
+        arc_states = compute_arc_states(query.memory, STORY_ARCS)
+        return {
+            "reply": "(initialized)",
+            "mood": "curious",
+            "unlocks": [],
+            "arc_states": arc_states,
+            "story_arcs": STORY_ARCS
+        }
 
     conversation_history = "\n".join(query.dialogue_history[-5:])
     discoveries = [m for m in query.memory if ':' in m]
@@ -228,7 +235,6 @@ Message: {query.user_input}
                         UNLOCK_DESCRIPTIONS[unlock_id] = f"a location known as {label}, rumored to hold secrets of the Hollow"
 
         arc_states = compute_arc_states(query.memory + unlocks, STORY_ARCS)
-        print(STORY_ARCS)
 
         return {
             "reply": reply,
@@ -236,9 +242,15 @@ Message: {query.user_input}
             "unlocks": unlocks,
             "arc_states": arc_states,
             "story_arcs": STORY_ARCS
-
         }
 
     except Exception as e:
         print(str(e))
         return {"error": str(e)}
+
+
+# ... all previous code ...
+
+@app.get("/health")
+def health_check():
+    return {"status": "ok"}
