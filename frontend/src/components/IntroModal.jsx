@@ -3,7 +3,7 @@ import React from "react";
 export default function IntroModal({ onClose }) {
     return (
         <div className="fixed inset-0 z-50 bg-black/90 backdrop-blur-sm flex items-center justify-center px-4">
-            <div className="relative w-full max-w-4xl bg-[#1a1a1a] text-white rounded-xl shadow-2xl overflow-hidden border border-gray-700">
+            <div className="relative w-full max-w-5xl bg-[#1a1a1a] text-white rounded-xl shadow-2xl overflow-hidden border border-gray-700">
                 {/* Low-opacity background image */}
                 <div
                     className="absolute inset-0 z-0 bg-center bg-cover opacity-15 pointer-events-none"
@@ -41,6 +41,21 @@ export default function IntroModal({ onClose }) {
                                 is AI-generated.
                             </p>
                         </div>
+
+                        <div className="col-span-3">
+                            <h2 className="font-bold text-[#1f7aeb] mb-1 uppercase tracking-widest text-sm">
+                                Core Themes
+                            </h2>
+                            <ul className="list-disc list-inside text-gray-300 space-y-1 text-sm">
+                                <li>Interactive and adaptive storytelling driven by LLMs</li>
+                                <li>Branching discovery: locations, lore, and characters evolve dynamically</li>
+                                <li>Emotional resonance: sadness, fear, hope — all modulated by player interactions</li>
+                                <li>Living map: the world unfolds as you speak, for your own story.</li>
+                            </ul>
+                        </div>
+
+
+
 
                         {/* Content Breakdown */}
                         <div className="grid grid-cols-5 gap-6 text-sm">
@@ -86,10 +101,16 @@ export default function IntroModal({ onClose }) {
                                     Tech Stack
                                 </h2>
                                 <ul className="list-disc list-inside text-gray-300 space-y-1 text-sm">
-                                    <li><a href="https://github.com/nasserqadri/whispers-hollow" target="_blank"
-                                        rel="noreferrer"
-                                        className="text-sm text-blue-400 hover:text-blue-300 underline inline-flex items-center space-x-2"
-                                    >Github link</a></li>
+                                    <li>
+                                        <a
+                                            href="https://github.com/nasserqadri/whispers-hollow"
+                                            target="_blank"
+                                            rel="noreferrer"
+                                            className="text-sm text-blue-400 hover:text-blue-300 underline inline-flex items-center space-x-2"
+                                        >
+                                            Github link
+                                        </a>
+                                    </li>
                                     <li>LLM: Gemini</li>
                                     <li>Frontend: React + Tailwind CSS</li>
                                     <li>Backend: Python, FastAPI</li>
@@ -121,10 +142,10 @@ export default function IntroModal({ onClose }) {
                         </div>
 
                         {/* Play Button */}
-                        <div className="pt-4">
+                        <div className="pt-6 flex justify-center">
                             <button
                                 onClick={() => onClose?.()}
-                                className="px-8 py-3 bg-[#1f7aeb] hover:bg-[#1663c7] rounded-full text-white font-semibold text-lg uppercase tracking-wide transition-all duration-300 shadow-lg"
+                                className="px-8 py-3 bg-[#1f7aeb] hover:bg-[#1663c7] rounded-full text-white font-semibold text-md uppercase tracking-wide transition-all duration-300 shadow-lg"
                             >
                                 Enter the Hollow
                             </button>

@@ -103,7 +103,7 @@ const getFollowups = async (ghost, userInput, memory, sessionId, dialogueHistory
 
 
 export default function WhispersOfTheHollow() {
-  
+
   const [showIntroModal, setShowIntroModal] = useState(true);
 
   const [selectedGhost] = useState("Lantern Girl");
@@ -388,6 +388,12 @@ export default function WhispersOfTheHollow() {
                 <input
                   value={customInput}
                   onChange={(e) => setCustomInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && customInput.trim()) {
+                      handleUserInput(customInput);
+                      setCustomInput('');
+                    }
+                  }}
                   placeholder="Speak your mind..."
                   className="flex-grow bg-gray-800 text-white p-2 rounded-l-md placeholder-gray-400"
                 />

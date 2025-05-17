@@ -11,6 +11,15 @@ is AI-generated.
 
 ---
 
+## Core Themes
+
+- Interactive and adaptive storytelling driven by LLMs  
+- Branching discovery: locations, lore, and characters evolve dynamically  
+- Emotional resonance: sadness, fear, hope — all modulated by player interactions
+- Living map: the world unfolds as you speak, for your own story
+
+---
+
 ## Includes
 
 - 🤖 AI-generated dialogue and follow-up questions  
