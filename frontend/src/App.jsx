@@ -84,22 +84,64 @@ export default function WhispersOfTheHollow() {
     init();
   }, []);
 
-  const getGhostReply = async (ghost, userInput, memory, sessionId, dialogueHistory) => {
-    const res = await fetch(`${baseURL}/talk`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ghost, user_input: userInput, memory, session_id: sessionId, dialogue_history: dialogueHistory })
-    });
-    const data = await res.json();
-    return {
-      reply: data.reply || "(The ghost whispers nothing...)",
-      mood: data.mood || "curious",
-      unlocks: data.unlocks || [],
-      arc_states: data.arc_states || {},
-      story_arcs: data.story_arcs || {}
-    };
+  const getGhostReply = async (ghost, userInput, memory = [], sessionId, dialogueHistory) => {
+    try {
+      const res = await fetch(`${baseURL}/talk`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ghost,
+          user_input: userInput,
+          memory,
+          session_id: sessionId,
+          dialogue_history: dialogueHistory
+        })
+      });
+  
+      const data = await res.json();
+  
+      // Check for backend error response
+      if (data.error) {
+        if (data.error.includes("429")) {
+          return {
+            reply: "(The ghosts are overwhelmed... try again in a moment.)",
+            mood: "sad",
+            unlocks: [],
+            arc_states: {},
+            story_arcs: {}
+          };
+        }
+  
+        return {
+          reply: "(The ghost is silent… something's wrong.)",
+          mood: "sad",
+          unlocks: [],
+          arc_states: {},
+          story_arcs: {}
+        };
+      }
+  
+      // Normal case
+      return {
+        reply: data.reply || "(The ghost whispers nothing...)",
+        mood: data.mood || "curious",
+        unlocks: data.unlocks || [],
+        arc_states: data.arc_states || {},
+        story_arcs: data.story_arcs || {}
+      };
+  
+    } catch (err) {
+      console.error("Ghost reply error:", err);
+      return {
+        reply: "(The ghost is silent… something's wrong.)",
+        mood: "sad",
+        unlocks: [],
+        arc_states: {},
+        story_arcs: {}
+      };
+    }
   };
-
+  
   const getFollowups = async (ghost, userInput, memory, sessionId, dialogueHistory) => {
     const res = await fetch(`${baseURL}/suggest`, {
       method: 'POST',
@@ -149,7 +191,7 @@ export default function WhispersOfTheHollow() {
         updatedMap[loc] = { label, x, y, opacity: 1.0 };
 
         toast.success(`New map location unlocked: ${label}`, {
-          duration: 5000,
+          duration: 10000,
         });
       } else if (unlocks.includes(loc)) {
         updatedMap[loc].opacity = 1.0;
@@ -164,7 +206,7 @@ export default function WhispersOfTheHollow() {
     newlyDiscoveredClues.forEach(clue => {
       const label = clue.replace(/^.*:/, '').replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
       toast.success(`New clue discovered: ${label}`, {
-        duration: 5000,
+        duration: 10000,
       });
     });
 
