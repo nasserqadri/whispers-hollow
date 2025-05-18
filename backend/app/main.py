@@ -22,6 +22,9 @@ app.add_middleware(
 
 client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
 
+# MODEL = "gemini-2.0-flash-001"
+MODEL = "gemini-1.5-flash-002"
+
 class GhostQuery(BaseModel):
     ghost: str
     user_input: str
@@ -167,7 +170,7 @@ Message: {query.user_input}
 
     try:
         response = client.models.generate_content(
-            model='gemini-2.0-flash-001',
+            model=MODEL,
             contents=system_prompt,
         )
         reply = response.text.strip()
@@ -177,7 +180,7 @@ Message: {query.user_input}
             f"Reply with only the one word that best fits:\n{query.user_input}"
         )
         mood_response = client.models.generate_content(
-            model='gemini-2.0-flash-001',
+            model=MODEL,
             contents=mood_prompt
         )
         mood = mood_response.text.strip().lower()
@@ -190,9 +193,9 @@ Message: {query.user_input}
         new_arc_allowed = len(STORY_ARCS) < 5
         dynamic_arc_instruction = (
             "You may define ONE new story arc if and only if there are fewer than 5 total story arcs.\n"
-            "It must contain only ONE required item, and that item must be a new map location unlock with the form 'map:location_id'.\n"
+            "It must contain one required item and two optional items, as shown in the structure below. The required item must be a new map location unlock with the form 'map:location_id'. And the optional item can be a npc type or a clue type. These must be unique, you cannot use any of the known unlocks or current arcs. \n"
             "Example structure:\n"
-            "{ \"key\": \"mist_bridge\", \"label\": \"Mist Bridge\", \"required\": [\"map:mist_bridge\"] }"
+            "{ \"key\": \"mist_bridge\", \"label\": \"Mist Bridge\", \"required\": [\"map:mist_bridge\"], \"optional\": [\"npc:ilkka_the_wise\", \"clue:elder_wand\"] }"
             if new_arc_allowed else ""
         )
 
@@ -208,7 +211,7 @@ Message: {query.user_input}
         )
 
         objective_response = client.models.generate_content(
-            model='gemini-2.0-flash-001',
+            model=MODEL,
             contents=objective_prompt,
             config=types.GenerateContentConfig(response_mime_type='application/json'),
         )
@@ -223,12 +226,20 @@ Message: {query.user_input}
         if new_arc:
             arc_key = new_arc.get("key")
             required = new_arc.get("required", [])
+            optional = new_arc.get("optional", [])
+            print(new_arc)
             if arc_key and arc_key not in STORY_ARCS and isinstance(required, list):
                 STORY_ARCS[arc_key] = {
                     "required": required,
-                    "optional": []
+                    "optional": optional if isinstance(optional, list) else []
                 }
+                print(STORY_ARCS)
                 ALL_KNOWN_UNLOCKS.update(required)
+                ALL_KNOWN_UNLOCKS.update(optional if isinstance(optional, list) else [])
+                label = new_arc.get("label", arc_key.replace("_", " ").title())
+                for unlock_id in required + (optional if isinstance(optional, list) else []):
+                    if unlock_id.startswith("map:") and unlock_id not in UNLOCK_DESCRIPTIONS:
+                        UNLOCK_DESCRIPTIONS[unlock_id] = f"a location known as {label}, rumored to hold secrets of the Hollow"
                 label = new_arc.get("label", arc_key.replace("_", " ").title())
                 for unlock_id in required:
                     if unlock_id.startswith("map:") and unlock_id not in UNLOCK_DESCRIPTIONS:
@@ -272,7 +283,7 @@ Reply only with a JSON list of 3 strings, in this format:  ["question1", "questi
 
     try:
         response = client.models.generate_content(
-            model='gemini-2.0-flash-001',
+            model=MODEL,
             contents=prompt,
             config=types.GenerateContentConfig(response_mime_type='application/json'),
         )
